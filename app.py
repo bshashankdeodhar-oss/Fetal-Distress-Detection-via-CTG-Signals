@@ -16,14 +16,27 @@ st.set_page_config(
     page_title="CTG-ENGINEERING // FETAL DISTRESS MASTER BLUEPRINT",
     page_icon="📐",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Architectural Blueprint Custom CSS Injection
+# Architectural Blueprint Custom CSS Injection (Desktop Taskbar Mode)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Roboto+Mono:wght@300;400;600;700&display=swap');
     
+    /* Hide Streamlit default sidebar & header decoration */
+    [data-testid="stSidebar"] {
+        display: none !important;
+    }
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+    }
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 2rem !important;
+        max-width: 98% !important;
+    }
+
     /* Master Blueprint Background & Grid */
     .stApp {
         background-color: #002b4e !important;
@@ -36,28 +49,50 @@ st.markdown("""
         color: rgba(255, 255, 255, 0.88) !important;
         font-family: 'Roboto Mono', monospace !important;
     }
-    
-    /* Header & Serial Text */
-    .blueprint-serial {
-        color: #00ffff;
-        font-size: 11px;
-        letter-spacing: 1.5px;
-        font-weight: 700;
+
+    /* Desktop Taskbar / Command Dock */
+    .desktop-taskbar {
+        background: rgba(0, 20, 40, 0.92);
+        border: 1px solid #00ffff;
+        box-shadow: 0 4px 20px rgba(0, 255, 255, 0.15);
+        padding: 8px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        position: relative;
     }
-    .blueprint-title {
+    
+    .taskbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .taskbar-icon {
+        font-size: 20px;
+    }
+    .taskbar-title {
         color: #ffffff;
-        font-size: 24px;
+        font-size: 13px;
         font-weight: 700;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        margin-bottom: 2px;
+        letter-spacing: 1.5px;
     }
-    .blueprint-subtitle {
-        color: rgba(255, 255, 255, 0.5);
-        font-size: 12px;
-        margin-bottom: 12px;
+    .taskbar-spec {
+        color: #00ffff;
+        font-size: 10px;
+        letter-spacing: 1px;
     }
     
+    .taskbar-status {
+        border: 1px solid #00ff88;
+        background: rgba(0, 255, 136, 0.1);
+        color: #00ff88;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 3px 8px;
+        letter-spacing: 1px;
+    }
+
     /* Dimension Line */
     .dimension-line {
         border-top: 1px dashed rgba(0, 255, 255, 0.3);
@@ -66,26 +101,17 @@ st.markdown("""
         font-size: 10px;
         letter-spacing: 1px;
         padding-top: 4px;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
     }
     
     /* Redline Note */
     .redline-box {
         background-color: rgba(255, 51, 51, 0.12);
         border: 1px dashed #ff3333;
-        padding: 10px 14px;
+        padding: 8px 14px;
         color: #ff9999;
         font-family: 'Architects Daughter', cursive;
-        font-size: 15px;
-        margin-bottom: 16px;
-    }
-    
-    /* Wireframe Card Containers */
-    .blueprint-card {
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        background: rgba(0, 38, 70, 0.75);
-        padding: 16px;
-        position: relative;
+        font-size: 14px;
         margin-bottom: 14px;
     }
     
@@ -96,7 +122,7 @@ st.markdown("""
         color: #00ff88;
         padding: 8px 14px;
         text-align: center;
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
         letter-spacing: 1px;
     }
@@ -106,7 +132,7 @@ st.markdown("""
         color: #ffcc00;
         padding: 8px 14px;
         text-align: center;
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
         letter-spacing: 1px;
     }
@@ -116,15 +142,9 @@ st.markdown("""
         color: #ff3333;
         padding: 8px 14px;
         text-align: center;
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
         letter-spacing: 1px;
-    }
-    
-    /* Sidebar Styling */
-    section[data-testid="stSidebar"] {
-        background-color: #001f38 !important;
-        border-right: 1px solid #00ffff !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -184,22 +204,48 @@ data_bundle = load_and_train_models()
 feature_names = data_bundle['feature_names']
 class_names = ['Normal', 'Suspect', 'Pathologic']
 
-# ----------------- SIDEBAR -----------------
-with st.sidebar:
-    st.markdown('<div class="blueprint-serial">SPEC // CTG-2126 // REV.4</div>', unsafe_allow_html=True)
-    st.title("📐 DRAFTING CONTROLS")
-    
+# ----------------- DESKTOP COMMAND TASKBAR -----------------
+st.markdown("""
+<div class="desktop-taskbar">
+    <div class="taskbar-brand">
+        <span class="taskbar-icon">📐</span>
+        <div>
+            <div class="taskbar-title">CTG-ENGINEERING // FETAL MONITORING DESKTOP</div>
+            <div class="taskbar-spec">SPEC: CTG-2126 // SHEET NO. 01 // REV. 2026.09</div>
+        </div>
+    </div>
+    <div class="taskbar-status">STATUS: ONLINE // COST_CALIBRATED P&ge;0.11</div>
+</div>
+""", unsafe_allow_html=True)
+
+# Horizontal Command Controls Dock (Replacing bulky vertical sidebar)
+taskbar_col1, taskbar_col2, taskbar_col3 = st.columns([1.2, 1.2, 1.0])
+
+with taskbar_col1:
     selected_model_name = st.selectbox(
-        "Classifier Family:",
+        "⚙️ CLASSIFIER INFERENCE FAMILY:",
         ["LightGBM (Gradient Boosted Trees)", "Random Forest (Bagged Ensembles)", "Support Vector Machine (SVC RBF)"]
     )
-    
-    st.markdown("---")
-    st.markdown("**CALIBRATION PRESETS:**")
+
+with taskbar_col2:
     scenario = st.selectbox(
-        "Load Clinical Blueprint:",
-        ["Custom Drafting Input", "Preset A: Normal Reassuring", "Preset B: Borderline Reduced Variability", "Preset C: Acute Pathologic Distress"]
+        "📋 DRAFTING PRESET SCENARIO:",
+        ["Custom Manual Drafting", "Preset A: Normal Reassuring", "Preset B: Borderline Reduced Variability", "Preset C: Acute Pathologic Distress"]
     )
+
+with taskbar_col3:
+    st.markdown("<div style='font-size:11px; color:#00ffff; margin-bottom:4px;'>📐 HELD-OUT COHORT:</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:12px; font-weight:700; color:#ffffff;'>426 PATIENTS (332N / 59S / 35P)<br><span style='color:#00ff88;'>MACRO F1: 0.9030</span></div>", unsafe_allow_html=True)
+
+st.markdown('<div class="dimension-line">&larr; MASTER WORKSPACE DIMENSION: 100% FLUID RESPONSIVE GRID &rarr;</div>', unsafe_allow_html=True)
+
+st.markdown("""
+<div class="redline-box">
+    <strong>[ENGINEER'S REDLINE // ASYMMETRIC LOSS ENFORCED]</strong>
+    Clinical safety calibration: <strong>Cost(Missed Distress) = 10 &times; Cost(False Alarm)</strong>. 
+    Pathologic trigger point set at <strong>P &ge; 0.110</strong> (Recall: 94.29%).
+</div>
+""", unsafe_allow_html=True)
 
 default_values = {
     'LB': 135.0, 'AC': 0.003, 'FM': 0.0, 'UC': 0.005, 'DL': 0.0, 'DS': 0.0, 'DP': 0.0,
@@ -214,20 +260,6 @@ elif scenario == "Preset B: Borderline Reduced Variability":
     default_values.update({'LB': 152.0, 'AC': 0.001, 'ASTV': 58.0, 'ALTV': 18.0, 'DP': 0.0, 'MSTV': 0.8})
 elif scenario == "Preset C: Acute Pathologic Distress":
     default_values.update({'LB': 168.0, 'AC': 0.000, 'ASTV': 78.0, 'ALTV': 45.0, 'DP': 0.003, 'DS': 0.001, 'MSTV': 0.4})
-
-# ----------------- MAIN HEADER -----------------
-st.markdown('<div class="blueprint-serial">DOC_REF: CTG-2126 // SHEET NO. 01 OF 04</div>', unsafe_allow_html=True)
-st.markdown('<div class="blueprint-title">CARDIOTOCOGRAPHY FETAL DISTRESS DIAGNOSTIC SCHEMATIC</div>', unsafe_allow_html=True)
-st.markdown('<div class="blueprint-subtitle">SYSTEM SPECIFICATION: MULTI-FAMILY CLINICAL RISK CLASSIFIER & ASYMMETRIC COST CALIBRATION</div>', unsafe_allow_html=True)
-st.markdown('<div class="dimension-line">&larr; DIMENSION: 1440px MASTER WORKSPACE // GRID SNAP: 10px &rarr;</div>', unsafe_allow_html=True)
-
-st.markdown("""
-<div class="redline-box">
-    <strong>[ENGINEER'S REDLINE // DR. NOTE]</strong><br>
-    Asymmetric Clinical Cost-Matrix enforced: <strong>Cost(Missed Distress) = 10 &times; Cost(False Alarm)</strong>. 
-    Pathologic safety threshold calibrated at <strong>P &ge; 0.110</strong>.
-</div>
-""", unsafe_allow_html=True)
 
 tabs = st.tabs(["📐 [01.0] Live Parameter Drafting", "📊 [02.0] Multi-Family Benchmark", "📈 [03.0] SHAP Impact Vectors"])
 
