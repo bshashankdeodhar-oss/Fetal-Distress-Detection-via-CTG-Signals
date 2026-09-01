@@ -1,10 +1,10 @@
 /**
  * ARCHITECTURAL BLUEPRINT // FETAL DISTRESS REAL-TIME SIMULATION & INFERENCE ENGINE
- * Master Plan Client Logic // CTG-2126-REV.4
+ * Windows-Style Desktop Taskbar Edition // CTG-2126-REV.4
  */
 
 // -------------------------------------------------------------
-// 1. LIVE MOUSE COORDINATE TRACKER (BLUEPRINT HUD)
+// 1. LIVE MOUSE COORDINATE TRACKER & CLOCK
 // -------------------------------------------------------------
 window.addEventListener('mousemove', (e) => {
     const mouseX = document.getElementById('mouse-x');
@@ -15,8 +15,63 @@ window.addEventListener('mousemove', (e) => {
     }
 });
 
+function updateTaskbarClock() {
+    const now = new Date();
+    const timeElem = document.getElementById('taskbar-time');
+    const dateElem = document.getElementById('taskbar-date');
+    if (timeElem && dateElem) {
+        timeElem.textContent = now.toTimeString().split(' ')[0];
+        dateElem.textContent = now.toISOString().split('T')[0];
+    }
+}
+setInterval(updateTaskbarClock, 1000);
+updateTaskbarClock();
+
 // -------------------------------------------------------------
-// 2. CLINICAL SCENARIOS
+// 2. WINDOWS DESKTOP TASKBAR DOCK CONTROLS & VIEWS
+// -------------------------------------------------------------
+function switchDesktopView(viewId) {
+    // Hide all views
+    document.querySelectorAll('.desktop-view').forEach(v => v.classList.remove('active-view'));
+    
+    // Show selected view
+    const target = document.getElementById(`view-${viewId}`);
+    if (target) target.classList.add('active-view');
+
+    // Update active state on taskbar icons
+    document.querySelectorAll('.dock-app-icon').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.getElementById(`dock-btn-${viewId}`);
+    if (activeBtn) activeBtn.classList.add('active');
+}
+
+function toggleStartMenu() {
+    const menu = document.getElementById('start-menu-flyout');
+    if (menu) {
+        menu.classList.toggle('open');
+    }
+}
+
+// Close start menu if clicked outside
+window.addEventListener('click', (e) => {
+    const menu = document.getElementById('start-menu-flyout');
+    const startBtn = document.querySelector('.taskbar-start-btn');
+    if (menu && menu.classList.contains('open')) {
+        if (!menu.contains(e.target) && !startBtn.contains(e.target)) {
+            menu.classList.remove('open');
+        }
+    }
+});
+
+function syncModelFromTaskbar(modelVal) {
+    const radio = document.querySelector(`input[name="model_family"][value="${modelVal}"]`);
+    if (radio) {
+        radio.checked = true;
+        updateSimulation();
+    }
+}
+
+// -------------------------------------------------------------
+// 3. CLINICAL SCENARIOS
 // -------------------------------------------------------------
 const scenarios = {
     normal: {
@@ -64,7 +119,7 @@ function loadScenario(type) {
 }
 
 // -------------------------------------------------------------
-// 3. REAL-TIME CLINICAL INFERENCE & SHAP VECTORS
+// 4. REAL-TIME CLINICAL INFERENCE & SHAP VECTORS
 // -------------------------------------------------------------
 function updateSimulation() {
     const lb = parseFloat(document.getElementById('input-lb').value);
@@ -95,12 +150,26 @@ function updateSimulation() {
     // Multi-Family Posterior Probabilities Calculation
     const selectedModel = document.querySelector('input[name="model_family"]:checked').value;
     
+    // Sync taskbar select dropdown if different
+    const taskbarSelect = document.getElementById('taskbar-model-select');
+    if (taskbarSelect && taskbarSelect.value !== selectedModel) {
+        taskbarSelect.value = selectedModel;
+    }
+
+    const engineLabels = {
+        'lgb': 'LIGHTGBM (GRADIENT BOOSTED TREES)',
+        'xgb': 'XGBOOST (REGULARIZED BOOSTING)',
+        'svm': 'SUPPORT VECTOR MACHINE (SVC RBF)',
+        'mlp': 'PYTORCH DEEP TABULAR MLP'
+    };
+    const engineLabelElem = document.getElementById('current-engine-label');
+    if (engineLabelElem) engineLabelElem.textContent = engineLabels[selectedModel] || 'LIGHTGBM';
+
     // Physiological risk index calculation
     let pathLogit = -3.2 + (astv * 0.065) + (dp * 1200.0) + (altv * 0.04) + (fhrDev * 0.035) - (ac * 350.0);
     let suspLogit = -1.8 + (astv * 0.04) + (altv * 0.02) + (fhrDev * 0.02) - (ac * 150.0);
     let normLogit = 2.5 - (astv * 0.06) - (dp * 800.0) - (altv * 0.035) + (ac * 400.0);
 
-    // Model family inductive adjustments
     if (selectedModel === 'xgb') {
         pathLogit *= 1.08;
     } else if (selectedModel === 'svm') {
@@ -193,14 +262,15 @@ function renderShapVectors(shapDict) {
 }
 
 // -------------------------------------------------------------
-// 4. LIVE BLUEPRINT OSCILLOSCOPE (CANVAS DRAWING)
+// 5. LIVE BLUEPRINT OSCILLOSCOPE (CANVAS DRAWING)
 // -------------------------------------------------------------
 const canvas = document.getElementById('ctg-blueprint-canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas ? canvas.getContext('2d') : null;
 
 let timeOffset = 0;
 
 function drawBlueprintCTG() {
+    if (!canvas || !ctx) return;
     const width = canvas.width;
     const height = canvas.height;
 
@@ -232,7 +302,7 @@ function drawBlueprintCTG() {
     ctx.fillText('180 BPM', 8, 30);
     ctx.fillText('140 BPM (IDEAL)', 8, 85);
     ctx.fillText('100 BPM', 8, 140);
-    ctx.fillText('UC TOCO', 8, 185);
+    ctx.fillText('UC TOCO', 8, 180);
 
     // Current signal parameters
     const lb = parseFloat(document.getElementById('input-lb')?.value || 135);

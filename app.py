@@ -19,12 +19,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Architectural Blueprint Custom CSS Injection (Desktop Taskbar Mode)
+# Architectural Blueprint Custom CSS (Windows 11 Bottom Taskbar Dock Mode)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Roboto+Mono:wght@300;400;600;700&display=swap');
     
-    /* Hide Streamlit default sidebar & header decoration */
+    /* Hide Streamlit default sidebar & header */
     [data-testid="stSidebar"] {
         display: none !important;
     }
@@ -33,7 +33,7 @@ st.markdown("""
     }
     .block-container {
         padding-top: 1rem !important;
-        padding-bottom: 2rem !important;
+        padding-bottom: 80px !important; /* Space for bottom taskbar */
         max-width: 98% !important;
     }
 
@@ -50,47 +50,25 @@ st.markdown("""
         font-family: 'Roboto Mono', monospace !important;
     }
 
-    /* Desktop Taskbar / Command Dock */
-    .desktop-taskbar {
-        background: rgba(0, 20, 40, 0.92);
-        border: 1px solid #00ffff;
-        box-shadow: 0 4px 20px rgba(0, 255, 255, 0.15);
-        padding: 8px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 16px;
-        position: relative;
-    }
-    
-    .taskbar-brand {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    .taskbar-icon {
-        font-size: 20px;
-    }
-    .taskbar-title {
-        color: #ffffff;
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 1.5px;
-    }
-    .taskbar-spec {
+    /* Header text */
+    .doc-serial {
         color: #00ffff;
-        font-size: 10px;
-        letter-spacing: 1px;
-    }
-    
-    .taskbar-status {
-        border: 1px solid #00ff88;
-        background: rgba(0, 255, 136, 0.1);
-        color: #00ff88;
-        font-size: 10px;
+        font-size: 11px;
+        letter-spacing: 1.5px;
         font-weight: 700;
-        padding: 3px 8px;
+    }
+    .main-title {
+        color: #ffffff;
+        font-size: 22px;
+        font-weight: 700;
         letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
+    .doc-sub {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 12px;
+        margin-bottom: 10px;
     }
 
     /* Dimension Line */
@@ -145,6 +123,71 @@ st.markdown("""
         font-size: 15px;
         font-weight: 700;
         letter-spacing: 1px;
+    }
+
+    /* Fixed Windows 11 Bottom Taskbar Dock */
+    .bottom-dock-fixed {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 48px;
+        background: rgba(0, 18, 38, 0.96);
+        border-top: 1px solid #00ffff;
+        box-shadow: 0 -4px 20px rgba(0, 255, 255, 0.2);
+        backdrop-filter: blur(12px);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        z-index: 99999;
+    }
+
+    .dock-start-brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #ffffff;
+        background: rgba(0, 255, 255, 0.08);
+        border: 1px solid #00ffff;
+        padding: 4px 10px;
+    }
+
+    .dock-center-apps {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .dock-app-pill {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #ffffff;
+        font-size: 10px;
+        letter-spacing: 0.5px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        padding: 4px 10px;
+        border-radius: 4px;
+    }
+
+    .dock-tray-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 10px;
+        color: #00ffff;
+    }
+
+    .tray-safety-lock {
+        border: 1px solid #00ff88;
+        background: rgba(0, 255, 136, 0.1);
+        color: #00ff88;
+        padding: 2px 8px;
+        font-weight: 700;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -204,39 +247,10 @@ data_bundle = load_and_train_models()
 feature_names = data_bundle['feature_names']
 class_names = ['Normal', 'Suspect', 'Pathologic']
 
-# ----------------- DESKTOP COMMAND TASKBAR -----------------
-st.markdown("""
-<div class="desktop-taskbar">
-    <div class="taskbar-brand">
-        <span class="taskbar-icon">📐</span>
-        <div>
-            <div class="taskbar-title">CTG-ENGINEERING // FETAL MONITORING DESKTOP</div>
-            <div class="taskbar-spec">SPEC: CTG-2126 // SHEET NO. 01 // REV. 2026.09</div>
-        </div>
-    </div>
-    <div class="taskbar-status">STATUS: ONLINE // COST_CALIBRATED P&ge;0.11</div>
-</div>
-""", unsafe_allow_html=True)
-
-# Horizontal Command Controls Dock (Replacing bulky vertical sidebar)
-taskbar_col1, taskbar_col2, taskbar_col3 = st.columns([1.2, 1.2, 1.0])
-
-with taskbar_col1:
-    selected_model_name = st.selectbox(
-        "⚙️ CLASSIFIER INFERENCE FAMILY:",
-        ["LightGBM (Gradient Boosted Trees)", "Random Forest (Bagged Ensembles)", "Support Vector Machine (SVC RBF)"]
-    )
-
-with taskbar_col2:
-    scenario = st.selectbox(
-        "📋 DRAFTING PRESET SCENARIO:",
-        ["Custom Manual Drafting", "Preset A: Normal Reassuring", "Preset B: Borderline Reduced Variability", "Preset C: Acute Pathologic Distress"]
-    )
-
-with taskbar_col3:
-    st.markdown("<div style='font-size:11px; color:#00ffff; margin-bottom:4px;'>📐 HELD-OUT COHORT:</div>", unsafe_allow_html=True)
-    st.markdown("<div style='font-size:12px; font-weight:700; color:#ffffff;'>426 PATIENTS (332N / 59S / 35P)<br><span style='color:#00ff88;'>MACRO F1: 0.9030</span></div>", unsafe_allow_html=True)
-
+# Top Blueprint Header
+st.markdown('<div class="doc-serial">DOC_REF: CTG-2126 // SHEET NO. 01 OF 04 // REV. 2026.09</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">CARDIOTOCOGRAPHY FETAL DISTRESS DIAGNOSTIC SCHEMATIC</div>', unsafe_allow_html=True)
+st.markdown('<div class="doc-sub">SYSTEM SPECIFICATION: MULTI-FAMILY CLINICAL RISK CLASSIFIER & ASYMMETRIC COST CALIBRATION</div>', unsafe_allow_html=True)
 st.markdown('<div class="dimension-line">&larr; MASTER WORKSPACE DIMENSION: 100% FLUID RESPONSIVE GRID &rarr;</div>', unsafe_allow_html=True)
 
 st.markdown("""
@@ -246,6 +260,22 @@ st.markdown("""
     Pathologic trigger point set at <strong>P &ge; 0.110</strong> (Recall: 94.29%).
 </div>
 """, unsafe_allow_html=True)
+
+# Top Fast Controls
+ctl_col1, ctl_col2, ctl_col3 = st.columns([1.2, 1.2, 1.0])
+with ctl_col1:
+    selected_model_name = st.selectbox(
+        "⚙️ CLASSIFIER INFERENCE FAMILY:",
+        ["LightGBM (Gradient Boosted Trees)", "Random Forest (Bagged Ensembles)", "Support Vector Machine (SVC RBF)"]
+    )
+with ctl_col2:
+    scenario = st.selectbox(
+        "📋 DRAFTING PRESET SCENARIO:",
+        ["Custom Manual Drafting", "Preset A: Normal Reassuring", "Preset B: Borderline Reduced Variability", "Preset C: Acute Pathologic Distress"]
+    )
+with ctl_col3:
+    st.markdown("<div style='font-size:11px; color:#00ffff; margin-bottom:2px;'>📐 HELD-OUT SPLIT:</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:12px; font-weight:700; color:#ffffff;'>426 PATIENTS (332N / 59S / 35P)<br><span style='color:#00ff88;'>MACRO F1: 0.9030</span></div>", unsafe_allow_html=True)
 
 default_values = {
     'LB': 135.0, 'AC': 0.003, 'FM': 0.0, 'UC': 0.005, 'DL': 0.0, 'DS': 0.0, 'DP': 0.0,
@@ -261,7 +291,7 @@ elif scenario == "Preset B: Borderline Reduced Variability":
 elif scenario == "Preset C: Acute Pathologic Distress":
     default_values.update({'LB': 168.0, 'AC': 0.000, 'ASTV': 78.0, 'ALTV': 45.0, 'DP': 0.003, 'DS': 0.001, 'MSTV': 0.4})
 
-tabs = st.tabs(["📐 [01.0] Live Parameter Drafting", "📊 [02.0] Multi-Family Benchmark", "📈 [03.0] SHAP Impact Vectors"])
+tabs = st.tabs(["📐 [01.0] Parameter Drafting", "📊 [02.0] Model Leaderboard", "📈 [03.0] SHAP Explainability"])
 
 # TAB 1: PARAMETER DRAFTING
 with tabs[0]:
@@ -369,3 +399,22 @@ with tabs[2]:
     with sc2:
         if os.path.exists('outputs/figures/shap_waterfall_patient_reassuring.png'):
             st.image('outputs/figures/shap_waterfall_patient_reassuring.png', caption="Case Study 2: Reassuring Patient Waterfall", use_container_width=True)
+
+# Fixed Windows 11 Bottom Taskbar Dock HTML Injection
+st.markdown("""
+<div class="bottom-dock-fixed">
+    <div class="dock-start-brand">
+        <span>📐 CTG-OS</span>
+    </div>
+    <div class="dock-center-apps">
+        <div class="dock-app-pill">🎛️ DRAFTING</div>
+        <div class="dock-app-pill">📊 BENCHMARK</div>
+        <div class="dock-app-pill">🌊 SHAP XAI</div>
+        <div class="dock-app-pill">⚡ P&ge;0.11 OPTIMIZED</div>
+    </div>
+    <div class="dock-tray-right">
+        <span class="tray-safety-lock">🛡️ SAFETY LOCK ACTIVE</span>
+        <span>DOC_REF: CTG-2126</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)

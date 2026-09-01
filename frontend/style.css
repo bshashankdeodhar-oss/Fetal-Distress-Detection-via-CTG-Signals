@@ -1,5 +1,6 @@
 /* ==========================================================================
    ARCHITECTURAL BLUEPRINT DESIGN SYSTEM (CYANOTYPE MASTER PLAN AESTHETIC)
+   WINDOWS-STYLE DESKTOP TASKBAR EDITION
    ========================================================================== */
 
 :root {
@@ -37,6 +38,7 @@ body.blueprint-theme {
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
+    padding-bottom: 70px; /* Space for fixed bottom taskbar */
     cursor: crosshair;
 }
 
@@ -63,8 +65,8 @@ body.blueprint-theme {
 /* Crosshair HUD Tracker */
 .crosshair-tracker {
     position: fixed;
-    bottom: 12px;
-    left: 16px;
+    top: 12px;
+    right: 16px;
     z-index: 1000;
     background: rgba(0, 20, 40, 0.85);
     border: 1px solid var(--accent-cyan);
@@ -127,14 +129,14 @@ body.blueprint-theme {
 .master-container {
     max-width: 1440px;
     margin: 0 auto;
-    padding: 24px;
+    padding: 20px 24px;
     position: relative;
     z-index: 1;
 }
 
 .blueprint-header {
-    padding: 20px 24px;
-    margin-bottom: 24px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
 }
 
 .header-content {
@@ -148,37 +150,37 @@ body.blueprint-theme {
     color: var(--accent-cyan);
     font-size: 11px;
     letter-spacing: 1.5px;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     font-weight: 600;
 }
 
 .main-title {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
     letter-spacing: 1px;
     color: #ffffff;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 
 .doc-sub {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--line-dim);
     letter-spacing: 0.5px;
 }
 
 .title-meta-box {
     border: 1px solid var(--accent-cyan-dim);
-    padding: 10px 16px;
+    padding: 8px 14px;
     background: rgba(0, 255, 255, 0.04);
-    min-width: 320px;
+    min-width: 330px;
 }
 
 .meta-row {
     display: flex;
     justify-content: space-between;
-    font-size: 11px;
-    margin-bottom: 3px;
+    font-size: 10.5px;
+    margin-bottom: 2px;
 }
 
 .meta-row span {
@@ -190,22 +192,21 @@ body.blueprint-theme {
     font-weight: 700;
 }
 
-/* Horizontal Dimension Lines */
 .dimension-line-horizontal {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 14px;
+    margin-top: 10px;
     border-top: 1px dashed var(--accent-cyan-dim);
-    padding-top: 6px;
+    padding-top: 4px;
     color: var(--accent-cyan);
-    font-size: 10px;
+    font-size: 9.5px;
     letter-spacing: 1px;
 }
 
 .dim-arrow-left, .dim-arrow-right {
     margin: 0 8px;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 /* -------------------------------------------------------------
@@ -215,11 +216,11 @@ body.blueprint-theme {
     position: relative;
     background: var(--accent-redline-bg);
     border: 1px dashed var(--accent-redline);
-    padding: 10px 16px;
-    margin-bottom: 20px;
+    padding: 8px 14px;
+    margin-bottom: 16px;
     color: #ff9999;
     font-family: var(--font-hand);
-    font-size: 15px;
+    font-size: 14px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -238,17 +239,34 @@ body.blueprint-theme {
 }
 
 /* -------------------------------------------------------------
-   5. BLUEPRINT MAIN GRID (2 COLUMNS)
+   5. DESKTOP VIEWS (TAB SWITCHING)
+   ------------------------------------------------------------- */
+.desktop-view {
+    display: none;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.desktop-view.active-view {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* -------------------------------------------------------------
+   6. BLUEPRINT MAIN GRID (2 COLUMNS)
    ------------------------------------------------------------- */
 .blueprint-main-grid {
     display: grid;
     grid-template-columns: 460px 1fr;
-    gap: 24px;
-    margin-bottom: 24px;
+    gap: 20px;
+    margin-bottom: 16px;
 }
 
 .blueprint-card {
-    padding: 20px;
+    padding: 16px;
 }
 
 .card-header {
@@ -257,7 +275,7 @@ body.blueprint-theme {
     align-items: center;
     border-bottom: 1px solid var(--line-drafting);
     padding-bottom: 8px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 
 .section-code {
@@ -266,40 +284,40 @@ body.blueprint-theme {
 }
 
 .card-title {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
     flex-grow: 1;
-    margin: 0 12px;
+    margin: 0 10px;
 }
 
 .coord-tag {
-    font-size: 10px;
+    font-size: 9.5px;
     color: var(--line-dim);
 }
 
 /* -------------------------------------------------------------
-   6. STAMPS & BUTTONS
+   7. STAMPS & BUTTONS
    ------------------------------------------------------------- */
 .preset-scenario-box {
-    margin-bottom: 16px;
-    padding-bottom: 14px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
     border-bottom: 1px dashed var(--line-dim);
 }
 
 .control-label {
     display: block;
-    font-size: 11px;
+    font-size: 10.5px;
     color: var(--accent-cyan);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-weight: 600;
 }
 
 .scenario-buttons {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 }
 
 .stamp-btn {
@@ -307,8 +325,8 @@ body.blueprint-theme {
     border: 1px solid var(--line-drafting);
     color: var(--line-drafting);
     font-family: var(--font-tech);
-    font-size: 11px;
-    padding: 7px 12px;
+    font-size: 10.5px;
+    padding: 6px 10px;
     text-align: left;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -335,29 +353,28 @@ body.blueprint-theme {
     color: var(--accent-redline);
 }
 
-/* Fieldset and Sliders */
 .param-fieldset {
     border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 12px 14px;
-    margin-bottom: 16px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
 }
 
 .fieldset-legend {
     padding: 0 6px;
-    font-size: 11px;
+    font-size: 10.5px;
     color: var(--accent-cyan);
     font-weight: 600;
 }
 
 .param-item {
-    margin-bottom: 14px;
+    margin-bottom: 12px;
 }
 
 .param-header {
     display: flex;
     justify-content: space-between;
-    font-size: 11px;
-    margin-bottom: 4px;
+    font-size: 10.5px;
+    margin-bottom: 3px;
 }
 
 .val-display {
@@ -390,22 +407,21 @@ input[type="range"]::-webkit-slider-thumb {
 .param-scale {
     display: flex;
     justify-content: space-between;
-    font-size: 9px;
+    font-size: 8.5px;
     color: var(--line-dim);
     margin-top: 2px;
 }
 
-/* Radio Stamps */
 .radio-stamps {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 }
 
 .radio-stamp-label {
     display: flex;
     align-items: center;
-    font-size: 10px;
+    font-size: 9.5px;
     color: var(--line-drafting);
     cursor: pointer;
 }
@@ -416,16 +432,16 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 /* -------------------------------------------------------------
-   7. RIGHT COLUMN: DECISION STAMP & CANVAS
+   8. RIGHT COLUMN: DECISION STAMP & CANVAS
    ------------------------------------------------------------- */
 .triage-stamp-box {
-    margin-bottom: 18px;
+    margin-bottom: 14px;
 }
 
 .stamp-border {
     border: 2px solid var(--accent-green);
     background: rgba(0, 255, 136, 0.06);
-    padding: 14px 18px;
+    padding: 12px 16px;
     text-align: center;
     position: relative;
     transition: all 0.2s ease;
@@ -442,47 +458,46 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .stamp-sub {
-    font-size: 10px;
+    font-size: 9.5px;
     color: var(--line-dim);
     letter-spacing: 1px;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 
 .stamp-main {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     letter-spacing: 1.5px;
     color: var(--accent-green);
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 
 .stamp-suspect .stamp-main { color: var(--accent-yellow); }
 .stamp-pathologic .stamp-main { color: var(--accent-redline); }
 
 .stamp-directive {
-    font-size: 11px;
+    font-size: 10.5px;
     color: #ffffff;
     font-weight: 400;
 }
 
-/* Blueprint Oscilloscope Canvas */
 .oscilloscope-container {
-    padding: 12px;
-    margin-bottom: 18px;
+    padding: 10px;
+    margin-bottom: 14px;
     background: rgba(0, 20, 36, 0.85);
 }
 
 .scope-header {
     display: flex;
     justify-content: space-between;
-    font-size: 10px;
-    margin-bottom: 8px;
+    font-size: 9.5px;
+    margin-bottom: 6px;
     color: var(--accent-cyan);
 }
 
 canvas#ctg-blueprint-canvas {
     width: 100%;
-    height: 180px;
+    height: 170px;
     display: block;
     border: 1px solid rgba(0, 255, 255, 0.3);
     background: #001a33;
@@ -490,41 +505,40 @@ canvas#ctg-blueprint-canvas {
 
 .scope-footer {
     text-align: center;
-    font-size: 9px;
-    margin-top: 6px;
+    font-size: 8.5px;
+    margin-top: 4px;
 }
 
-/* Blueprint Probability Gauges */
 .probabilities-blueprint-section {
-    margin-bottom: 18px;
-    padding: 12px;
+    margin-bottom: 14px;
+    padding: 10px;
     border: 1px dashed rgba(255, 255, 255, 0.25);
 }
 
 .sub-heading {
-    font-size: 11px;
+    font-size: 10.5px;
     color: var(--accent-cyan);
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     display: block;
 }
 
 .prob-row {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
-    gap: 12px;
+    margin-bottom: 6px;
+    gap: 10px;
 }
 
 .prob-name {
-    width: 120px;
-    font-size: 11px;
+    width: 110px;
+    font-size: 10px;
     font-weight: 600;
 }
 
 .gauge-wireframe {
     flex-grow: 1;
-    height: 16px;
+    height: 14px;
     border: 1px solid var(--line-drafting);
     position: relative;
     background: rgba(0, 0, 0, 0.3);
@@ -541,74 +555,72 @@ canvas#ctg-blueprint-canvas {
 
 .gauge-dimension-marker {
     position: absolute;
-    right: 8px;
+    right: 6px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
     color: #ffffff;
     text-shadow: 0 0 2px #000;
 }
 
-/* Engineered Feature Mini-Grid */
 .engineered-metrics-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 18px;
+    gap: 10px;
+    margin-bottom: 14px;
 }
 
 .metric-mini-card {
-    padding: 10px;
+    padding: 8px;
     background: rgba(0, 30, 56, 0.6);
 }
 
 .mini-label {
-    font-size: 9px;
+    font-size: 8.5px;
     color: var(--accent-cyan);
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 
 .mini-val {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
     margin-bottom: 2px;
 }
 
 .mini-formula {
-    font-size: 8.5px;
+    font-size: 8px;
     color: var(--line-dim);
 }
 
-/* SHAP Vector Section */
 .shap-vector-section {
-    padding: 12px;
+    padding: 10px;
 }
 
 .shap-header {
     display: flex;
     justify-content: space-between;
-    font-size: 10px;
+    font-size: 9.5px;
     color: var(--accent-cyan);
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .shap-bar-row {
     display: flex;
     align-items: center;
-    margin-bottom: 6px;
-    font-size: 10px;
-    gap: 10px;
+    margin-bottom: 5px;
+    font-size: 9.5px;
+    gap: 8px;
 }
 
 .shap-feat-name {
-    width: 130px;
+    width: 120px;
     color: var(--line-drafting);
 }
 
 .shap-track {
     flex-grow: 1;
-    height: 8px;
+    height: 7px;
     background: rgba(255, 255, 255, 0.1);
     position: relative;
 }
@@ -621,56 +633,332 @@ canvas#ctg-blueprint-canvas {
     transition: all 0.2s ease;
 }
 
-.shap-vector-fill.negative {
-    background: var(--accent-green);
-}
-
-.shap-vector-fill.positive {
-    background: var(--accent-redline);
-}
+.shap-vector-fill.negative { background: var(--accent-green); }
+.shap-vector-fill.positive { background: var(--accent-redline); }
 
 .shap-val-tag {
-    width: 50px;
+    width: 45px;
     text-align: right;
     font-weight: 700;
 }
 
 /* -------------------------------------------------------------
-   8. FOOTER
+   9. TABLE & CASE STUDY STYLING
    ------------------------------------------------------------- */
-.blueprint-footer {
+.table-responsive {
+    overflow-x: auto;
+}
+
+.blueprint-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin-top: 10px;
+}
+
+.blueprint-table th, .blueprint-table td {
+    border: 1px solid var(--line-dim);
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.blueprint-table th {
+    background: rgba(0, 255, 255, 0.1);
+    color: var(--accent-cyan);
+    font-weight: 700;
+}
+
+.highlight-champion {
+    background: rgba(0, 255, 136, 0.12);
+    color: #ffffff;
+}
+
+.highlight-safety {
+    background: rgba(0, 255, 255, 0.15);
+    color: #ffffff;
+}
+
+.case-study-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.case-box {
+    padding: 14px;
+}
+
+.case-title {
+    color: var(--accent-cyan);
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.badge-pathologic-mini {
+    display: inline-block;
+    border: 1px solid var(--accent-redline);
+    background: var(--accent-redline-bg);
+    color: var(--accent-redline);
+    padding: 4px 8px;
+    font-weight: 700;
+    font-size: 10px;
+    margin-top: 10px;
+}
+
+.badge-normal-mini {
+    display: inline-block;
+    border: 1px solid var(--accent-green);
+    background: rgba(0, 255, 136, 0.1);
+    color: var(--accent-green);
+    padding: 4px 8px;
+    font-weight: 700;
+    font-size: 10px;
+    margin-top: 10px;
+}
+
+/* =============================================================
+   10. WINDOWS 11 STYLE DESKTOP BOTTOM TASKBAR (FIXED)
+   ============================================================= */
+.desktop-bottom-taskbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 48px;
+    background: rgba(0, 18, 38, 0.95);
+    border-top: 1px solid var(--accent-cyan);
+    box-shadow: 0 -4px 20px rgba(0, 255, 255, 0.2);
+    backdrop-filter: blur(12px);
+    z-index: 9999;
+}
+
+.taskbar-inner {
+    max-width: 1440px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Left Start Menu */
+.taskbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.taskbar-start-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 255, 255, 0.08);
+    border: 1px solid var(--accent-cyan);
+    padding: 5px 12px;
+    color: #ffffff;
+    font-family: var(--font-tech);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.taskbar-start-btn:hover {
+    background: rgba(0, 255, 255, 0.25);
+    box-shadow: 0 0 8px var(--accent-cyan);
+}
+
+.taskbar-search-pill {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 9999px;
+    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--line-dim);
+}
+
+/* Center Centered Dock (Windows 11 Layout) */
+.taskbar-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dock-app-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--line-drafting);
+    padding: 4px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.15s ease;
+}
+
+.dock-app-icon:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(0, 255, 255, 0.4);
+}
+
+.dock-app-icon.active {
+    background: rgba(0, 255, 255, 0.15);
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+}
+
+.dock-app-icon .app-emoji {
+    font-size: 14px;
+}
+
+.dock-app-icon .app-name {
+    font-size: 8.5px;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.active-dot {
+    width: 14px;
+    height: 2.5px;
+    background: var(--accent-cyan);
+    border-radius: 2px;
+    position: absolute;
+    bottom: 2px;
+    display: none;
+}
+
+.dock-app-icon.active .active-dot {
+    display: block;
+    box-shadow: 0 0 6px var(--accent-cyan);
+}
+
+.dock-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 0 6px;
+}
+
+.dock-model-selector {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--accent-cyan);
+}
+
+.dock-model-selector select {
+    background: #002244;
+    color: #ffffff;
+    border: 1px solid var(--accent-cyan);
+    font-family: var(--font-tech);
+    font-size: 10px;
+    padding: 3px 6px;
+    cursor: pointer;
+}
+
+/* Right System Tray */
+.taskbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tray-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--accent-green);
+    background: rgba(0, 255, 136, 0.1);
+    padding: 3px 8px;
+    font-size: 9.5px;
+    color: var(--accent-green);
+    font-weight: 700;
+}
+
+.pulse-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--accent-green);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.9); opacity: 0.8; }
+    50% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+.tray-clock {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+    font-size: 9px;
+    color: #ffffff;
+}
+
+/* Start Menu Flyout */
+.start-menu-window {
+    display: none;
+    position: fixed;
+    bottom: 56px;
+    left: 20px;
+    width: 380px;
+    padding: 16px;
+    background: rgba(0, 24, 48, 0.96);
+    border: 1px solid var(--accent-cyan);
+    box-shadow: 0 8px 30px rgba(0, 255, 255, 0.25);
+    z-index: 10000;
+}
+
+.start-menu-window.open {
+    display: block;
+    animation: slideUp 0.15s ease-out;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.start-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
-}
-
-.spec-label {
-    font-size: 9.5px;
-    color: var(--accent-cyan);
-}
-
-.spec-val {
+    border-bottom: 1px solid var(--line-drafting);
+    padding-bottom: 8px;
+    margin-bottom: 10px;
     font-size: 11px;
-}
-
-.spec-val a {
-    color: #ffffff;
-    text-decoration: underline;
-}
-
-.stamp-box-approved {
-    border: 2px solid var(--accent-cyan);
-    padding: 6px 14px;
-    text-align: center;
-    font-size: 10px;
-    font-weight: 700;
     color: var(--accent-cyan);
-    letter-spacing: 1px;
+    font-weight: 700;
 }
 
-.stamp-box-approved span {
-    color: var(--accent-green);
+.close-flyout-btn {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.start-body p {
+    font-size: 10.5px;
+    margin-bottom: 8px;
+}
+
+.start-body a {
+    color: var(--accent-cyan);
+    text-decoration: underline;
 }
 
 /* Responsive adjustments */
@@ -681,7 +969,10 @@ canvas#ctg-blueprint-canvas {
     .header-content {
         flex-direction: column;
     }
-    .engineered-metrics-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .case-study-grid {
+        grid-template-columns: 1fr;
+    }
+    .taskbar-search-pill {
+        display: none;
     }
 }
