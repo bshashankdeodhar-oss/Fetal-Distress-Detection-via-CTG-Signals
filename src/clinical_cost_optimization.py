@@ -217,7 +217,7 @@ def main():
 - **Optimization Strategy:** We replaced naive mathematical probability cutoffs ($P > 0.33$) with a **Bayesian Cost-Utility Threshold Sweep** optimizing an asymmetric clinical penalty matrix ($C_{{FN}} = 10, C_{{FP}} = 2$).
 
 ## 2. Before vs. After Comparison
-| Metric | Baseline (Argmax $P>0.33$) | Clinically Calibrated ($P \ge {optimal_th:.2f}$) | Clinical Improvement |
+| Metric | Baseline (Argmax P>0.33) | Clinically Calibrated (P >= {optimal_th:.2f}) | Clinical Improvement |
 | :--- | :---: | :---: | :---: |
 | **Total Clinical Risk Score** | **{baseline_cost:.1f}** | **{opt_cost:.1f}** | **{((baseline_cost - opt_cost)/baseline_cost)*100:.1f}% Risk Reduction** ⭐ |
 | **Pathologic Recall (Safety)** | **{baseline_path_recall*100:.2f}%** | **{opt_path_recall*100:.2f}%** | **{opt_cm[2, 2]}/{np.sum(y_test==2)} Distress Cases Caught** |

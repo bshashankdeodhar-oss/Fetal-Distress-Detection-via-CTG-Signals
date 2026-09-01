@@ -249,7 +249,7 @@ def main():
     report_text += """
 ## 3. Key Clinical Findings & Explainability (SHAP)
 1. **Top Predictive Biomarkers:**
-   - **`ASTV` (% Abnormal Short-Term Variability):** Strongest non-linear driver of fetal distress. Values $>65\%$ almost exclusively push risk toward *Pathologic*.
+   - **`ASTV` (% Abnormal Short-Term Variability):** Strongest non-linear driver of fetal distress. Values >65% almost exclusively push risk toward *Pathologic*.
    - **`VCR` (Variability Collapse Ratio - Engineered Feature):** Compounding degradation index amplifying acute autonomic dysfunction.
    - **`DP` (Prolonged Decelerations):** Primary acute event biomarker for late-stage fetal hypoxia.
    - **`AC` (Accelerations):** Strongest protective factor indicating healthy somatic neurological reactivity.

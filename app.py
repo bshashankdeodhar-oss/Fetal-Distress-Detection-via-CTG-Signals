@@ -305,7 +305,7 @@ with tabs[0]:
         ax.set_xlabel('POSTERIOR PROBABILITY', color='#00ffff', fontsize=9, fontfamily='monospace')
         ax.set_ylabel('')
         ax.tick_params(colors='#00ffff', labelsize=9)
-        ax.grid(axis='x', linestyle='--', color='rgba(0, 255, 255, 0.2)')
+        ax.grid(axis='x', linestyle='--', color='#00ffff', alpha=0.25)
         plt.tight_layout()
         st.pyplot(fig)
         
