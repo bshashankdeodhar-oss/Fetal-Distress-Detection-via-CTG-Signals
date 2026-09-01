@@ -1,13 +1,14 @@
+import os
+import sys
 import urllib.request
 import zipfile
 import io
-import os
 import pandas as pd
 
-os.makedirs('data', exist_ok=True)
-csv_path = os.path.join('data', 'CTG.csv')
+target_dir = os.path.join('datasets', 'uci_ctg')
+os.makedirs(target_dir, exist_ok=True)
 
-# Method 1: Try downloading directly from UCI repo
+# Try downloading directly from UCI repo
 uci_url = "https://archive.ics.uci.edu/static/public/193/cardiotocography.zip"
 print(f"Downloading from {uci_url}...")
 try:
@@ -17,10 +18,9 @@ try:
         print("Zip contents:", z.namelist())
         for name in z.namelist():
             if name.endswith('.xls') or name.endswith('.xlsx') or name.endswith('.csv'):
-                z.extract(name, 'data')
-                print(f"Extracted {name} to data/")
+                z.extract(name, target_dir)
+                print(f"Extracted {name} to {target_dir}/")
 except Exception as e:
     print("UCI Direct download error:", e)
 
-# Check what was extracted
-print("Files in data:", os.listdir('data'))
+print(f"Files in {target_dir}:", os.listdir(target_dir))

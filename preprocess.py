@@ -30,9 +30,11 @@ os.makedirs('outputs/figures', exist_ok=True)
 os.makedirs('data', exist_ok=True)
 
 def load_and_preprocess_data():
-    excel_path = 'data/CTG.xls'
+    excel_path = os.path.join('datasets', 'uci_ctg', 'CTG.xls')
     if not os.path.exists(excel_path):
-        raise FileNotFoundError(f"{excel_path} not found.")
+        excel_path = 'CTG.xls'
+    if not os.path.exists(excel_path):
+        raise FileNotFoundError(f"{excel_path} not found. Please run fetch_all_datasets.py.")
     
     # Read the 'Raw Data' or 'Data' sheet
     xl = pd.ExcelFile(excel_path)
@@ -84,7 +86,8 @@ def load_and_preprocess_data():
     for k, v in counts.items():
         print(f"  Class {k} ({class_mapping.get(k, 'Unknown')}): {v} samples ({v/len(df_clean)*100:.2f}%)")
         
-    df_clean.to_csv('data/CTG_cleaned.csv', index=False)
+    out_csv = os.path.join('datasets', 'uci_ctg', 'CTG_cleaned.csv')
+    df_clean.to_csv(out_csv, index=False)
     return df_clean, feature_cols, target_col
 
 if __name__ == '__main__':
