@@ -1,0 +1,687 @@
+/* ==========================================================================
+   ARCHITECTURAL BLUEPRINT DESIGN SYSTEM (CYANOTYPE MASTER PLAN AESTHETIC)
+   ========================================================================== */
+
+:root {
+    --bg-blueprint: #002b4e;
+    --bg-grid-minor: rgba(0, 255, 255, 0.05);
+    --bg-grid-major: rgba(0, 255, 255, 0.14);
+    --bg-card: rgba(0, 38, 70, 0.72);
+    
+    --line-drafting: rgba(255, 255, 255, 0.85);
+    --line-dim: rgba(255, 255, 255, 0.35);
+    
+    --accent-redline: #ff3333;
+    --accent-redline-bg: rgba(255, 51, 51, 0.12);
+    --accent-cyan: #00ffff;
+    --accent-cyan-dim: rgba(0, 255, 255, 0.25);
+    --accent-yellow: #ffcc00;
+    --accent-green: #00ff88;
+    
+    --font-tech: 'Roboto Mono', monospace;
+    --font-hand: 'Architects Daughter', cursive;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body.blueprint-theme {
+    background-color: var(--bg-blueprint);
+    color: var(--line-drafting);
+    font-family: var(--font-tech);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+    cursor: crosshair;
+}
+
+/* -------------------------------------------------------------
+   1. MASTER BLUEPRINT GRID & TEXTURE
+   ------------------------------------------------------------- */
+.blueprint-grid-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    background-image: 
+        linear-gradient(var(--bg-grid-minor) 1px, transparent 1px),
+        linear-gradient(90deg, var(--bg-grid-minor) 1px, transparent 1px),
+        linear-gradient(var(--bg-grid-major) 1px, transparent 1px),
+        linear-gradient(90deg, var(--bg-grid-major) 1px, transparent 1px);
+    background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+    opacity: 0.85;
+}
+
+/* Crosshair HUD Tracker */
+.crosshair-tracker {
+    position: fixed;
+    bottom: 12px;
+    left: 16px;
+    z-index: 1000;
+    background: rgba(0, 20, 40, 0.85);
+    border: 1px solid var(--accent-cyan);
+    padding: 4px 10px;
+    font-size: 10px;
+    color: var(--accent-cyan);
+    letter-spacing: 1px;
+    display: flex;
+    gap: 12px;
+    pointer-events: none;
+}
+
+/* -------------------------------------------------------------
+   2. WIREFRAME BORDERS & CORNER CROSSHAIRS
+   ------------------------------------------------------------- */
+.border-wireframe {
+    border: 1px solid var(--line-drafting);
+    position: relative;
+    background: var(--bg-card);
+    backdrop-filter: blur(4px);
+}
+
+.corner-crosshair {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.corner-crosshair::before,
+.corner-crosshair::after {
+    content: '';
+    position: absolute;
+    background-color: var(--accent-cyan);
+}
+
+.corner-crosshair::before {
+    top: 4px;
+    left: -4px;
+    width: 17px;
+    height: 1px;
+}
+
+.corner-crosshair::after {
+    top: -4px;
+    left: 4px;
+    width: 1px;
+    height: 17px;
+}
+
+.corner-crosshair.top-left { top: -1px; left: -1px; }
+.corner-crosshair.top-right { top: -1px; right: -1px; }
+.corner-crosshair.bottom-left { bottom: -1px; left: -1px; }
+.corner-crosshair.bottom-right { bottom: -1px; right: -1px; }
+
+/* -------------------------------------------------------------
+   3. MASTER CONTAINER & HEADER
+   ------------------------------------------------------------- */
+.master-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 24px;
+    position: relative;
+    z-index: 1;
+}
+
+.blueprint-header {
+    padding: 20px 24px;
+    margin-bottom: 24px;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.doc-serial {
+    color: var(--accent-cyan);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.main-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #ffffff;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.doc-sub {
+    font-size: 12px;
+    color: var(--line-dim);
+    letter-spacing: 0.5px;
+}
+
+.title-meta-box {
+    border: 1px solid var(--accent-cyan-dim);
+    padding: 10px 16px;
+    background: rgba(0, 255, 255, 0.04);
+    min-width: 320px;
+}
+
+.meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 3px;
+}
+
+.meta-row span {
+    color: var(--accent-cyan);
+}
+
+.badge-approved {
+    color: var(--accent-green);
+    font-weight: 700;
+}
+
+/* Horizontal Dimension Lines */
+.dimension-line-horizontal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 14px;
+    border-top: 1px dashed var(--accent-cyan-dim);
+    padding-top: 6px;
+    color: var(--accent-cyan);
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+.dim-arrow-left, .dim-arrow-right {
+    margin: 0 8px;
+    font-size: 12px;
+}
+
+/* -------------------------------------------------------------
+   4. REDLINE DRAFTING NOTES
+   ------------------------------------------------------------- */
+.redline-floating {
+    position: relative;
+    background: var(--accent-redline-bg);
+    border: 1px dashed var(--accent-redline);
+    padding: 10px 16px;
+    margin-bottom: 20px;
+    color: #ff9999;
+    font-family: var(--font-hand);
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.redline-highlight {
+    color: var(--accent-redline);
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.redline-hand {
+    font-family: var(--font-hand);
+    color: var(--accent-redline);
+    font-size: 13px;
+}
+
+/* -------------------------------------------------------------
+   5. BLUEPRINT MAIN GRID (2 COLUMNS)
+   ------------------------------------------------------------- */
+.blueprint-main-grid {
+    display: grid;
+    grid-template-columns: 460px 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.blueprint-card {
+    padding: 20px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--line-drafting);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+}
+
+.section-code {
+    color: var(--accent-cyan);
+    font-weight: 700;
+}
+
+.card-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    flex-grow: 1;
+    margin: 0 12px;
+}
+
+.coord-tag {
+    font-size: 10px;
+    color: var(--line-dim);
+}
+
+/* -------------------------------------------------------------
+   6. STAMPS & BUTTONS
+   ------------------------------------------------------------- */
+.preset-scenario-box {
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--line-dim);
+}
+
+.control-label {
+    display: block;
+    font-size: 11px;
+    color: var(--accent-cyan);
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.scenario-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stamp-btn {
+    background: transparent;
+    border: 1px solid var(--line-drafting);
+    color: var(--line-drafting);
+    font-family: var(--font-tech);
+    font-size: 11px;
+    padding: 7px 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-transform: uppercase;
+}
+
+.stamp-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+}
+
+.stamp-btn.active {
+    background: rgba(0, 255, 255, 0.15);
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+    font-weight: 700;
+}
+
+.stamp-btn.redline-btn:hover,
+.stamp-btn.redline-btn.active {
+    background: var(--accent-redline-bg);
+    border-color: var(--accent-redline);
+    color: var(--accent-redline);
+}
+
+/* Fieldset and Sliders */
+.param-fieldset {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 12px 14px;
+    margin-bottom: 16px;
+}
+
+.fieldset-legend {
+    padding: 0 6px;
+    font-size: 11px;
+    color: var(--accent-cyan);
+    font-weight: 600;
+}
+
+.param-item {
+    margin-bottom: 14px;
+}
+
+.param-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 4px;
+}
+
+.val-display {
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.alert-cyan { color: var(--accent-cyan) !important; }
+.alert-red { color: var(--accent-redline) !important; }
+.alert-green { color: var(--accent-green) !important; }
+
+input[type="range"] {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 16px;
+    background: var(--accent-cyan);
+    border: 1px solid #ffffff;
+    cursor: pointer;
+}
+
+.param-scale {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: var(--line-dim);
+    margin-top: 2px;
+}
+
+/* Radio Stamps */
+.radio-stamps {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.radio-stamp-label {
+    display: flex;
+    align-items: center;
+    font-size: 10px;
+    color: var(--line-drafting);
+    cursor: pointer;
+}
+
+.radio-stamp-label input {
+    margin-right: 8px;
+    accent-color: var(--accent-cyan);
+}
+
+/* -------------------------------------------------------------
+   7. RIGHT COLUMN: DECISION STAMP & CANVAS
+   ------------------------------------------------------------- */
+.triage-stamp-box {
+    margin-bottom: 18px;
+}
+
+.stamp-border {
+    border: 2px solid var(--accent-green);
+    background: rgba(0, 255, 136, 0.06);
+    padding: 14px 18px;
+    text-align: center;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.stamp-border.stamp-suspect {
+    border-color: var(--accent-yellow);
+    background: rgba(255, 204, 0, 0.08);
+}
+
+.stamp-border.stamp-pathologic {
+    border-color: var(--accent-redline);
+    background: rgba(255, 51, 51, 0.12);
+}
+
+.stamp-sub {
+    font-size: 10px;
+    color: var(--line-dim);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.stamp-main {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--accent-green);
+    margin-bottom: 4px;
+}
+
+.stamp-suspect .stamp-main { color: var(--accent-yellow); }
+.stamp-pathologic .stamp-main { color: var(--accent-redline); }
+
+.stamp-directive {
+    font-size: 11px;
+    color: #ffffff;
+    font-weight: 400;
+}
+
+/* Blueprint Oscilloscope Canvas */
+.oscilloscope-container {
+    padding: 12px;
+    margin-bottom: 18px;
+    background: rgba(0, 20, 36, 0.85);
+}
+
+.scope-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    margin-bottom: 8px;
+    color: var(--accent-cyan);
+}
+
+canvas#ctg-blueprint-canvas {
+    width: 100%;
+    height: 180px;
+    display: block;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    background: #001a33;
+}
+
+.scope-footer {
+    text-align: center;
+    font-size: 9px;
+    margin-top: 6px;
+}
+
+/* Blueprint Probability Gauges */
+.probabilities-blueprint-section {
+    margin-bottom: 18px;
+    padding: 12px;
+    border: 1px dashed rgba(255, 255, 255, 0.25);
+}
+
+.sub-heading {
+    font-size: 11px;
+    color: var(--accent-cyan);
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.prob-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 12px;
+}
+
+.prob-name {
+    width: 120px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.gauge-wireframe {
+    flex-grow: 1;
+    height: 16px;
+    border: 1px solid var(--line-drafting);
+    position: relative;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.gauge-fill {
+    height: 100%;
+    transition: width 0.25s ease;
+}
+
+.fill-normal { background: var(--accent-green); }
+.fill-suspect { background: var(--accent-yellow); }
+.fill-pathologic { background: var(--accent-redline); }
+
+.gauge-dimension-marker {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 0 2px #000;
+}
+
+/* Engineered Feature Mini-Grid */
+.engineered-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.metric-mini-card {
+    padding: 10px;
+    background: rgba(0, 30, 56, 0.6);
+}
+
+.mini-label {
+    font-size: 9px;
+    color: var(--accent-cyan);
+    margin-bottom: 4px;
+}
+
+.mini-val {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.mini-formula {
+    font-size: 8.5px;
+    color: var(--line-dim);
+}
+
+/* SHAP Vector Section */
+.shap-vector-section {
+    padding: 12px;
+}
+
+.shap-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--accent-cyan);
+    margin-bottom: 10px;
+}
+
+.shap-bar-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 10px;
+    gap: 10px;
+}
+
+.shap-feat-name {
+    width: 130px;
+    color: var(--line-drafting);
+}
+
+.shap-track {
+    flex-grow: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.shap-vector-fill {
+    height: 100%;
+    background: var(--accent-cyan);
+    position: absolute;
+    left: 50%;
+    transition: all 0.2s ease;
+}
+
+.shap-vector-fill.negative {
+    background: var(--accent-green);
+}
+
+.shap-vector-fill.positive {
+    background: var(--accent-redline);
+}
+
+.shap-val-tag {
+    width: 50px;
+    text-align: right;
+    font-weight: 700;
+}
+
+/* -------------------------------------------------------------
+   8. FOOTER
+   ------------------------------------------------------------- */
+.blueprint-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+}
+
+.spec-label {
+    font-size: 9.5px;
+    color: var(--accent-cyan);
+}
+
+.spec-val {
+    font-size: 11px;
+}
+
+.spec-val a {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.stamp-box-approved {
+    border: 2px solid var(--accent-cyan);
+    padding: 6px 14px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    letter-spacing: 1px;
+}
+
+.stamp-box-approved span {
+    color: var(--accent-green);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .blueprint-main-grid {
+        grid-template-columns: 1fr;
+    }
+    .header-content {
+        flex-direction: column;
+    }
+    .engineered-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

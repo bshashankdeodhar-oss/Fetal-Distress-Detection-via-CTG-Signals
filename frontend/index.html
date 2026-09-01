@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTG-ENGINEERING // FETAL DISTRESS MASTER BLUEPRINT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Roboto+Mono:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="blueprint-theme">
+    <!-- Live Drafting Coordinate HUD -->
+    <div id="crosshair-hud" class="crosshair-tracker">
+        <span class="coord-label">LOC // <span id="mouse-x">0000</span>:<span id="mouse-y">0000</span></span>
+        <span class="grid-snap">GRID_SNAP: 10PX</span>
+    </div>
+
+    <!-- Background Blueprint Paper Texture & Grid -->
+    <div class="blueprint-grid-overlay"></div>
+
+    <div class="master-container">
+        <!-- Blueprint Header Block -->
+        <header class="blueprint-header border-wireframe">
+            <div class="corner-crosshair top-left"></div>
+            <div class="corner-crosshair top-right"></div>
+            <div class="corner-crosshair bottom-left"></div>
+            <div class="corner-crosshair bottom-right"></div>
+            
+            <div class="header-content">
+                <div class="title-block">
+                    <div class="doc-serial">DOC_REF: CTG-2126 // SHEET NO. 01 OF 04 // REV. 2026.09</div>
+                    <h1 class="main-title">CARDIOTOCOGRAPHY FETAL DISTRESS DIAGNOSTIC SCHEMATIC</h1>
+                    <div class="doc-sub">SYSTEM SPECIFICATION: MULTI-FAMILY CLINICAL RISK CLASSIFIER & ASYMMETRIC COST CALIBRATION</div>
+                </div>
+
+                <div class="title-meta-box">
+                    <div class="meta-row"><span>SCALE:</span> <strong>1:1 DIGITAL RECONSTRUCTION</strong></div>
+                    <div class="meta-row"><span>ENGINE:</span> <strong>XGBOOST / LIGHTGBM / SVM / MLP</strong></div>
+                    <div class="meta-row"><span>STANDARDS:</span> <strong>FIGO 2015 / ACOG GUIDELINES</strong></div>
+                    <div class="meta-row"><span>STATUS:</span> <span class="badge-approved">CERTIFIED VALIDATED</span></div>
+                </div>
+            </div>
+            <div class="dimension-line-horizontal">
+                <span class="dim-arrow-left">&larr;</span>
+                <span class="dim-text">DIMENSION: 1440px MASTER WORKSPACE</span>
+                <span class="dim-arrow-right">&rarr;</span>
+            </div>
+        </header>
+
+        <!-- Redline Drafting Margin Note -->
+        <aside class="redline-note redline-floating">
+            <div class="redline-pin"></div>
+            <div class="redline-text">
+                <strong>[ENGINEER'S REDLINE // DR. NOTE]</strong><br>
+                Class ratio is heavily skewed (8.3% Pathological). Asymmetric loss matrix enforced: 
+                <span class="redline-highlight">Cost(FN_Distress) = 10 &times; Cost(FP_Normal)</span>. 
+                Do not override safety margins!
+            </div>
+        </aside>
+
+        <!-- Main Engineering Grid Layout -->
+        <main class="blueprint-main-grid">
+            
+            <!-- Left Column: Drafting Controls & Parameter Inputs -->
+            <section class="blueprint-card controls-panel border-wireframe">
+                <div class="corner-crosshair top-left"></div>
+                <div class="corner-crosshair top-right"></div>
+                <div class="corner-crosshair bottom-left"></div>
+                <div class="corner-crosshair bottom-right"></div>
+                
+                <div class="card-header">
+                    <span class="section-code">[SEC 01.0]</span>
+                    <h2 class="card-title">SIGNAL MORPHOMETRICS & DRAFTING PARAMETERS</h2>
+                    <span class="coord-tag">X:040 Y:120</span>
+                </div>
+
+                <div class="preset-scenario-box">
+                    <label class="control-label">QUICK CALIBRATION PRESETS:</label>
+                    <div class="scenario-buttons">
+                        <button class="stamp-btn active" id="btn-scenario-normal" onclick="loadScenario('normal')">[ PRESET: NORMAL (REASSURING) ]</button>
+                        <button class="stamp-btn" id="btn-scenario-suspect" onclick="loadScenario('suspect')">[ PRESET: SUSPECT (EQUIVOCAL) ]</button>
+                        <button class="stamp-btn redline-btn" id="btn-scenario-pathologic" onclick="loadScenario('pathologic')">[ PRESET: PATHOLOGICAL (DISTRESS) ]</button>
+                    </div>
+                </div>
+
+                <div class="parameters-scroller">
+                    <!-- Group 1: Baseline & Rhythm -->
+                    <fieldset class="param-fieldset">
+                        <legend class="fieldset-legend">[ GROUP A // BASELINE & SOMATIC RHYTHM ]</legend>
+                        
+                        <div class="param-item">
+                            <div class="param-header">
+                                <label for="input-lb">BASELINE FHR (LB):</label>
+                                <span class="val-display" id="val-lb">135 BPM</span>
+                            </div>
+                            <input type="range" id="input-lb" min="80" max="200" value="135" step="1" oninput="updateSimulation()">
+                            <div class="param-scale"><span>80 (BRADY)</span><span>140 (IDEAL)</span><span>200 (TACHY)</span></div>
+                        </div>
+
+                        <div class="param-item">
+                            <div class="param-header">
+                                <label for="input-ac">ACCELERATIONS (AC / SEC):</label>
+                                <span class="val-display" id="val-ac">0.003</span>
+                            </div>
+                            <input type="range" id="input-ac" min="0.000" max="0.015" value="0.003" step="0.001" oninput="updateSimulation()">
+                            <div class="param-scale"><span>0.000 (ABSENT)</span><span>0.006 (REACTIVE)</span><span>0.015 (HIGH)</span></div>
+                        </div>
+
+                        <div class="param-item">
+                            <div class="param-header">
+                                <label for="input-uc">UTERINE CONTRACTIONS (UC / SEC):</label>
+                                <span class="val-display" id="val-uc">0.005</span>
+                            </div>
+                            <input type="range" id="input-uc" min="0.000" max="0.015" value="0.005" step="0.001" oninput="updateSimulation()">
+                            <div class="param-scale"><span>0.000 (REST)</span><span>0.005 (ACTIVE)</span><span>0.015 (HYPER)</span></div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Group 2: Decelerations & Autonomic Variability -->
+                    <fieldset class="param-fieldset">
+                        <legend class="fieldset-legend">[ GROUP B // DECELERATIONS & VARIABILITY COLLAPSE ]</legend>
+                        
+                        <div class="param-item">
+                            <div class="param-header">
+                                <label for="input-astv">% ABNORMAL SHORT-TERM VAR (ASTV):</label>
+                                <span class="val-display alert-cyan" id="val-astv">28 %</span>
+                            </div>
+                            <input type="range" id="input-astv" min="0" max="100" value="28" step="1" oninput="updateSimulation()">
+                            <div class="param-scale"><span>0% (NORMAL)</span><span>50% (SUSPECT)</span><span>100% (SEVERE)</span></div>
+                        </div>
+
+                        <div class="param-item">
+                            <div class="param-header">
+                                <label for="input-dp">PROLONGED DECELERATIONS (DP / SEC):</label>
+                                <span class="val-display alert-red" id="val-dp">0.000</span>
+                            </div>
+                            <input type="range" id="input-dp" min="0.000" max="0.006" value="0.000" step="0.0005" oninput="updateSimulation()">
+                            <div class="param-scale"><span>0.000 (NONE)</span><span>0.002 (CRITICAL)</span><span>0.006 (ACUTE)</span></div>
+                        </div>
+
+                        <div class="param-item">
+                            <div class="param-header">
+                                <label for="input-altv">% ABNORMAL LONG-TERM VAR (ALTV):</label>
+                                <span class="val-display" id="val-altv">0 %</span>
+                            </div>
+                            <input type="range" id="input-altv" min="0" max="100" value="0" step="1" oninput="updateSimulation()">
+                            <div class="param-scale"><span>0% (PHYSIOLOGIC)</span><span>50% (MODERATE)</span><span>100% (FLATLINE)</span></div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Group 3: Model Family Selector -->
+                    <fieldset class="param-fieldset">
+                        <legend class="fieldset-legend">[ GROUP C // CLASSIFIER INFERENCE FAMILY ]</legend>
+                        <div class="radio-stamps">
+                            <label class="radio-stamp-label">
+                                <input type="radio" name="model_family" value="lgb" checked onchange="updateSimulation()">
+                                <span>[ FAM 01: LIGHTGBM (GRADIENT BOOSTED TREES) ]</span>
+                            </label>
+                            <label class="radio-stamp-label">
+                                <input type="radio" name="model_family" value="xgb" onchange="updateSimulation()">
+                                <span>[ FAM 02: XGBOOST (REGULARIZED BOOSTING) ]</span>
+                            </label>
+                            <label class="radio-stamp-label">
+                                <input type="radio" name="model_family" value="svm" onchange="updateSimulation()">
+                                <span>[ FAM 03: SVM RBF (MAXIMUM-MARGIN KERNEL) ]</span>
+                            </label>
+                            <label class="radio-stamp-label">
+                                <input type="radio" name="model_family" value="mlp" onchange="updateSimulation()">
+                                <span>[ FAM 04: PYTORCH DEEP MLP (NEURAL NET) ]</span>
+                            </label>
+                        </div>
+                    </fieldset>
+                </div>
+            </section>
+
+            <!-- Right Column: Blueprint Live Visualizer & Clinical Decision Output -->
+            <section class="blueprint-card display-panel border-wireframe">
+                <div class="corner-crosshair top-left"></div>
+                <div class="corner-crosshair top-right"></div>
+                <div class="corner-crosshair bottom-left"></div>
+                <div class="corner-crosshair bottom-right"></div>
+
+                <div class="card-header">
+                    <span class="section-code">[SEC 02.0]</span>
+                    <h2 class="card-title">REAL-TIME CLINICAL DECISION & WAVEFORM SCHEMATIC</h2>
+                    <span class="coord-tag">X:540 Y:120</span>
+                </div>
+
+                <!-- Triage Verdict Blueprint Stamp Box -->
+                <div class="triage-stamp-box" id="triage-verdict-container">
+                    <div class="stamp-border">
+                        <div class="stamp-sub">AUTOMATED OBSTETRIC TRIAGE VERDICT // CALIBRATED $P \ge 0.11$</div>
+                        <div class="stamp-main" id="stamp-verdict-text">[ CLASS 1: NORMAL (REASSURING) ]</div>
+                        <div class="stamp-directive" id="stamp-directive-text">DIRECTIVE: AUTONOMIC HOMEOSTASIS INTACT. CONTINUE STANDARD INTRAPARTUM SURVEILLANCE.</div>
+                    </div>
+                </div>
+
+                <!-- Simulated Live Blueprint CTG Oscilloscope / Waveform -->
+                <div class="oscilloscope-container border-wireframe">
+                    <div class="scope-header">
+                        <span>LIVE SYNTHETIC CTG TRACE // 4 HZ SAMPLING // SCALE: 10mm/min</span>
+                        <span class="alert-cyan" id="live-fhr-indicator">FHR: 135 BPM | UC: 0.005</span>
+                    </div>
+                    <canvas id="ctg-blueprint-canvas" width="720" height="200"></canvas>
+                    <div class="scope-footer">
+                        <span class="dim-text">&larr; TIME AXIS: 20 MINUTES CONTINUOUS MONITORING &rarr;</span>
+                    </div>
+                </div>
+
+                <!-- Probability Distribution Blueprint Gauges -->
+                <div class="probabilities-blueprint-section">
+                    <div class="prob-header-line">
+                        <span class="sub-heading">[ POSTERIOR CLASS PROBABILITIES // ASYMMETRIC COST CALIBRATED ]</span>
+                    </div>
+
+                    <!-- Normal Bar -->
+                    <div class="prob-row">
+                        <span class="prob-name">NORMAL (P1):</span>
+                        <div class="gauge-wireframe">
+                            <div class="gauge-fill fill-normal" id="gauge-normal" style="width: 88%;"></div>
+                            <span class="gauge-dimension-marker" id="marker-normal">88.0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Suspect Bar -->
+                    <div class="prob-row">
+                        <span class="prob-name">SUSPECT (P2):</span>
+                        <div class="gauge-wireframe">
+                            <div class="gauge-fill fill-suspect" id="gauge-suspect" style="width: 9%;"></div>
+                            <span class="gauge-dimension-marker" id="marker-suspect">9.0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Pathologic Bar -->
+                    <div class="prob-row">
+                        <span class="prob-name alert-red">PATHOLOGIC (P3):</span>
+                        <div class="gauge-wireframe">
+                            <div class="gauge-fill fill-pathologic" id="gauge-pathologic" style="width: 3%;"></div>
+                            <span class="gauge-dimension-marker" id="marker-pathologic">3.0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Engineered Feature Blueprint Cards -->
+                <div class="engineered-metrics-grid">
+                    <div class="metric-mini-card border-wireframe">
+                        <div class="mini-label">DECELERATION SEVERITY (DSI)</div>
+                        <div class="mini-val" id="metric-dsi">0.000</div>
+                        <div class="mini-formula">[ (DL + 2DS + 3DP) / UC ]</div>
+                    </div>
+
+                    <div class="metric-mini-card border-wireframe">
+                        <div class="mini-label">VARIABILITY COLLAPSE (VCR)</div>
+                        <div class="mini-val alert-cyan" id="metric-vcr">0.00</div>
+                        <div class="mini-formula">[ (ASTV &times; ALTV) / (MSTV &times; MLTV) ]</div>
+                    </div>
+
+                    <div class="metric-mini-card border-wireframe">
+                        <div class="mini-label">FHR DEVIATION (&Delta;FHR)</div>
+                        <div class="mini-val" id="metric-fhrdev">5.0 BPM</div>
+                        <div class="mini-formula">[ |LB - 140| ]</div>
+                    </div>
+
+                    <div class="metric-mini-card border-wireframe">
+                        <div class="mini-label">CLINICAL RISK LOSS</div>
+                        <div class="mini-val alert-green" id="metric-risk">0.00 PTS</div>
+                        <div class="mini-formula">[ &Sigma; (C_ij &times; P_j) ]</div>
+                    </div>
+                </div>
+
+                <!-- SHAP Factor Breakdown Vectors -->
+                <div class="shap-vector-section border-wireframe">
+                    <div class="shap-header">
+                        <span>LOCAL SHAP IMPACT VECTORS // BIOMARKER PULL ON LOG-ODDS</span>
+                        <span class="redline-hand">[Handwritten: ASTV is dominant driver]</span>
+                    </div>
+                    <div class="shap-bars" id="shap-bars-container">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+            </section>
+        </main>
+
+        <!-- Blueprint Footer & System Specifications -->
+        <footer class="blueprint-footer border-wireframe">
+            <div class="footer-col">
+                <div class="spec-label">BENCHMARK PERFORMANCE:</div>
+                <div class="spec-val">MACRO F1: <strong>0.9030</strong> | PATHOLOGIC RECALL: <strong>94.29%</strong></div>
+            </div>
+            <div class="footer-col">
+                <div class="spec-label">HELD-OUT TEST COHORT:</div>
+                <div class="spec-val">426 PATIENTS (332 NORM / 59 SUSP / 35 PATH)</div>
+            </div>
+            <div class="footer-col">
+                <div class="spec-label">AUTHOR / REPOSITORY:</div>
+                <div class="spec-val"><a href="https://github.com/bshashankdeodhar-oss/Fetal-Distress-Detection-via-CTG-Signals" target="_blank">bshashankdeodhar-oss/Fetal-Distress-Detection-via-CTG-Signals</a></div>
+            </div>
+            <div class="footer-stamp">
+                <div class="stamp-box-approved">FINAL HACKATHON BUILD<br><span>VERIFIED & TESTED</span></div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
