@@ -1,7 +1,7 @@
 """
 Physiologically Calibrated Continuous CTG Telemetry & Sliding-Window Engine
+Smooth, continuous biological mapping (no hard discrete step jumps).
 Ingests continuous 4 Hz FHR and UC time-series from PhysioNet CTU-UHB database.
-Calibrated to UCI CTG feature scales (FIGO 2015 consensus).
 """
 import os
 import numpy as np
@@ -30,7 +30,7 @@ def load_physionet_record(record_id='1002', ctu_dir='datasets/physionet_ctu_uhb'
         except Exception:
             pass
 
-    # Binary fallback if WFDB fails
+    # Binary fallback
     dat_path = f"{rec_base}.dat"
     if os.path.exists(dat_path):
         with open(dat_path, 'rb') as f:
@@ -61,35 +61,39 @@ def generate_synthetic_telemetry(condition='pathologic', duration_minutes=60, fs
     np.random.seed(42)
     condition = str(condition).lower()
     if '1003' in condition or 'normal' in condition or 'reassuring' in condition:
-        # Reassuring normal: baseline ~136, healthy variability (std 4.5), frequent accelerations
-        baseline = 136.0 + 2.5 * np.sin(2 * np.pi * t / 500)
+        # Reassuring normal: baseline ~138 bpm with healthy autonomic variability and periodic accelerations
+        baseline = 138.0 + 2.0 * np.sin(2 * np.pi * t / 600)
         noise = np.random.normal(0, 3.2, n_samples)
         fhr = baseline + noise
-        # Add healthy accelerations
         for c_start in range(int(45 * fs), n_samples - int(60 * fs), c_period):
             c_dur = int(35 * fs)
-            fhr[c_start:c_start + c_dur] += np.hanning(c_dur) * np.random.uniform(18, 26)
+            fhr[c_start:c_start + c_dur] += np.hanning(c_dur) * np.random.uniform(18, 25)
 
     elif '1001' in condition or 'suspect' in condition:
-        # Suspect: borderline tachycardia (150 bpm), reduced variability (std 1.8), variable decels
-        baseline = 150.0 + 1.5 * np.sin(2 * np.pi * t / 400)
-        noise = np.random.normal(0, 1.6, n_samples)
+        # Suspect: gradual rise in baseline, moderate variability damping, episodic variable decelerations
+        baseline = 145.0 + (t / t[-1]) * 10.0 + 1.2 * np.sin(2 * np.pi * t / 400)
+        noise = np.random.normal(0, 1.8, n_samples)
         fhr = baseline + noise
-        for c_start in range(int(80 * fs), n_samples - int(60 * fs), c_period):
-            c_dur = int(30 * fs)
-            fhr[c_start:c_start + c_dur] -= np.hanning(c_dur) * np.random.uniform(25, 35)
+        for c_start in range(int(70 * fs), n_samples - int(60 * fs), c_period):
+            c_dur = int(35 * fs)
+            fhr[c_start:c_start + c_dur] -= np.hanning(c_dur) * np.random.uniform(22, 32)
 
     else:
-        # Pathologic: high baseline (165) collapsing to late decelerations with flatline variability
-        baseline = 162.0 - (t / t[-1]) * 15.0
-        noise = np.random.normal(0, 0.7, n_samples) # Minimal micro-variability
+        # Pathologic: progressive late deceleration hypoxia cascade
+        # Hour 0-20 mins: compensatory tachycardia (155 bpm)
+        # Hour 20-50 mins: severe variability collapse (flatline) + deep late decelerations lagging contractions
+        progress = t / t[-1] # 0.0 to 1.0
+        baseline = 158.0 - progress * 15.0
+        noise_amp = 2.2 * (1.0 - progress * 0.75) # Variability steadily collapses from 2.2 to 0.55 bpm!
+        noise = np.random.normal(0, noise_amp, n_samples)
         fhr = baseline + noise
-        # Recurrent Late Decelerations lagging behind contractions
         for c_start in range(int(60 * fs), n_samples - int(80 * fs), c_period):
-            lag = int(30 * fs) # Late deceleration lag
-            c_dur = int(65 * fs)
+            # As labor advances, decelerations get deeper and lag more (classic late decels)
+            lag = int((20 + 25 * (c_start / n_samples)) * fs)
+            c_dur = int(70 * fs)
+            severity = 25.0 + 35.0 * (c_start / n_samples)
             if c_start + lag + c_dur < n_samples:
-                fhr[c_start + lag:c_start + lag + c_dur] -= np.hanning(c_dur) * np.random.uniform(40, 60)
+                fhr[c_start + lag:c_start + lag + c_dur] -= np.hanning(c_dur) * severity
 
     fhr = np.clip(fhr, 50.0, 210.0)
     uc = np.clip(uc, 0.0, 100.0)
@@ -99,7 +103,7 @@ def generate_synthetic_telemetry(condition='pathologic', duration_minutes=60, fs
 def extract_sliding_window_features(fhr_window, uc_window, fs=4.0):
     """
     Extracts all 21 UCI CTG features + 18 engineered features from a continuous window.
-    Calibrated strictly to UCI dataset distributions.
+    Uses continuous biological mapping functions (sigmoid/tanh) to prevent sudden jumps.
     """
     eps = 1e-6
     # Filter 0 bpm loss-of-signal artifacts
@@ -109,15 +113,16 @@ def extract_sliding_window_features(fhr_window, uc_window, fs=4.0):
 
     dur_sec = max(len(fhr_window) / fs, 1.0)
 
+    # 1. Morphological baseline & central tendencies (using robust trimmed metrics)
     lb = float(np.median(valid))
     fhr_mean = float(np.mean(valid))
     fhr_mode = float(sst.mode(np.round(valid).astype(int), keepdims=False)[0])
     fhr_var = float(np.var(valid))
     fhr_min = float(np.percentile(valid, 2))
     fhr_max = float(np.percentile(valid, 98))
-    fhr_width = max(fhr_max - fhr_min, 5.0)
+    fhr_width = max(fhr_max - fhr_min, 10.0)
 
-    # Accelerations (>15 bpm above baseline for >=15s = 60 samples)
+    # 2. Continuous Accelerations rate
     above_bl = (valid - lb) >= 15.0
     ac_events, in_event, curr_len = 0, 0, 0
     for val in above_bl:
@@ -131,7 +136,7 @@ def extract_sliding_window_features(fhr_window, uc_window, fs=4.0):
             curr_len = 0
     ac_rate = ac_events / dur_sec
 
-    # Contractions (>20 mmHg for >=25s)
+    # 3. Uterine Contractions rate
     uc_above = uc_window >= 20.0
     uc_events, in_uc, curr_uc_len = 0, 0, 0
     for val in uc_above:
@@ -145,7 +150,7 @@ def extract_sliding_window_features(fhr_window, uc_window, fs=4.0):
             curr_uc_len = 0
     uc_rate = max(uc_events / dur_sec, 0.002)
 
-    # Decelerations
+    # 4. Decelerations (light, severe, prolonged)
     below_bl = (lb - valid) >= 15.0
     dl_cnt, ds_cnt, dp_cnt = 0, 0, 0
     in_dec, dec_len, max_drop = False, 0, 0
@@ -173,29 +178,20 @@ def extract_sliding_window_features(fhr_window, uc_window, fs=4.0):
     ds_rate = ds_cnt / dur_sec
     dp_rate = dp_cnt / dur_sec
 
-    # Physiological Autonomic Variability
-    # Short-term variability: beat-to-beat difference (scaled to UCI ~15-80%)
+    # 5. Continuous Autonomic Variability (Smooth Sigmoidal Transfer)
+    # diff_std measures micro-variability in beat-to-beat difference
     diffs = np.abs(np.diff(valid))
-    # In UCI, ASTV is % of time short-term diff < 1 bpm
-    raw_astv = float(np.mean(diffs < 1.0) * 100.0)
-    # Calibrate to UCI clinical scale: normal ~25%, pathologic ~75%
-    # Higher std of diffs = healthy (low ASTV); flat diffs = high ASTV
-    diff_std = np.std(diffs)
-    if diff_std > 2.0:
-        astv = float(np.clip(22.0 + np.random.uniform(-4, 5), 10.0, 40.0))
-        mstv = float(np.clip(1.8 + diff_std * 0.3, 1.2, 4.5))
-        altv = 0.0
-        mltv = float(np.clip(9.0 + np.std(valid) * 0.8, 6.0, 25.0))
-    elif diff_std > 1.0:
-        astv = float(np.clip(54.0 + np.random.uniform(-5, 6), 40.0, 65.0))
-        mstv = float(np.clip(1.0 + diff_std * 0.2, 0.7, 1.4))
-        altv = float(np.clip(15.0 + np.random.uniform(-4, 5), 5.0, 30.0))
-        mltv = float(np.clip(5.5 + np.std(valid) * 0.5, 3.0, 8.0))
-    else:
-        astv = float(np.clip(76.0 + np.random.uniform(-4, 5), 65.0, 90.0))
-        mstv = float(np.clip(0.4 + diff_std * 0.2, 0.2, 0.7))
-        altv = float(np.clip(45.0 + np.random.uniform(-5, 5), 30.0, 75.0))
-        mltv = float(np.clip(2.5 + np.std(valid) * 0.3, 1.0, 4.0))
+    diff_std = float(np.std(diffs))
+
+    # Continuous logistic mapping for ASTV: smoothly transitions between 18% (high variability) and 78% (flatline)
+    # Midpoint at diff_std = 1.6 bpm, slope = 2.0
+    astv = float(18.0 + 60.0 / (1.0 + np.exp(2.0 * (diff_std - 1.5))))
+    mstv = float(np.clip(0.4 + 0.6 * diff_std, 0.3, 3.5))
+
+    # Long-term variability: smooth mapping from overall window std
+    win_std = float(np.std(valid))
+    altv = float(65.0 / (1.0 + np.exp(0.6 * (win_std - 4.5))))
+    mltv = float(np.clip(2.0 + 1.2 * win_std, 1.5, 20.0))
 
     # Base dictionary
     row = {
