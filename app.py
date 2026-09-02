@@ -6,12 +6,12 @@ import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import seaborn as sns
 import lightgbm as lgb
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
-from sklearn.metrics import confusion_matrix
 import streamlit as st
 
 from src.live_stream_engine import (
@@ -54,20 +54,29 @@ header[data-testid="stHeader"] { background: transparent !important; }
 .dim-line    { border-top:1px dashed rgba(0,255,255,.3); text-align:center; color:#00ffff; font-size:10px; padding-top:4px; margin-bottom:12px; }
 .redline-box { background:rgba(255,51,51,.12); border:1px dashed #ff3333; padding:8px 14px; color:#ff9999; font-family:'Architects Daughter',cursive; font-size:13px; margin-bottom:12px; }
 
-.stamp-normal     { border:2px solid #00ff88; background:rgba(0,255,136,.08); color:#00ff88; padding:8px 14px; text-align:center; font-size:15px; font-weight:700; }
-.stamp-suspect    { border:2px solid #ffcc00; background:rgba(255,204,0,.1);  color:#ffcc00; padding:8px 14px; text-align:center; font-size:15px; font-weight:700; }
-.stamp-pathologic { border:2px solid #ff3333; background:rgba(255,51,51,.15); color:#ff3333; padding:8px 14px; text-align:center; font-size:15px; font-weight:700; }
+.stamp-normal     { border:2px solid #00ff88; background:rgba(0,255,136,.08); color:#00ff88; padding:8px 14px; text-align:center; font-size:15px; font-weight:700; border-radius:4px; }
+.stamp-suspect    { border:2px solid #ffcc00; background:rgba(255,204,0,.1);  color:#ffcc00; padding:8px 14px; text-align:center; font-size:15px; font-weight:700; border-radius:4px; }
+.stamp-pathologic { border:2px solid #ff3333; background:rgba(255,51,51,.15); color:#ff3333; padding:8px 14px; text-align:center; font-size:15px; font-weight:700; border-radius:4px; }
 
-.alarm-banner {
-    background: rgba(255, 0, 55, 0.25);
-    border: 2px solid #ff0055;
-    color: #ff6688;
-    padding: 10px 16px;
+.alert-precaution {
+    border: 1px dashed #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+    color: #fbbf24;
+    padding: 6px 12px;
+    font-size: 11.5px;
+    margin-top: 6px;
     border-radius: 4px;
+}
+
+.alert-emergency {
+    border: 2px solid #ef4444;
+    background: rgba(239, 68, 68, 0.22);
+    color: #fca5a5;
+    padding: 8px 14px;
+    font-size: 12px;
     font-weight: 700;
-    font-size: 14px;
-    margin-bottom: 12px;
-    animation: pulse 1.5s infinite;
+    margin-top: 6px;
+    border-radius: 4px;
 }
 
 /* Bottom taskbar */
@@ -91,7 +100,7 @@ header[data-testid="stHeader"] { background: transparent !important; }
 
 
 # ── Load & cache models ───────────────────────────────────────────────────────
-@st.cache_resource(show_spinner="Training models on CTG dataset…")
+@st.cache_resource(show_spinner="Initializing clinical inference engine…")
 def load_bundle():
     csv = os.path.join('datasets', 'uci_ctg', 'CTG_features_engineered.csv')
     if not os.path.exists(csv):
@@ -107,7 +116,6 @@ def load_bundle():
     X_tr_s = sc.fit_transform(X_tr)
     X_te_s  = sc.transform(X_te)
 
-    # Load Optuna params if available
     lgb_p = dict(n_estimators=350, learning_rate=0.04, num_leaves=40,
                  subsample=0.85, colsample_bytree=0.80, reg_alpha=0.1, reg_lambda=1.0,
                  class_weight='balanced', random_state=42, verbose=-1)
@@ -145,14 +153,8 @@ DATA_OK = bundle is not None
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown('<div class="doc-serial">DOC_REF: CTG-2126 // REV.2026.09 // FIGO 2015 / ACOG / PHYSIONET CTU-UHB</div>', unsafe_allow_html=True)
 st.markdown('<div class="main-title">Cardiotocography Fetal Distress Diagnostic Schematic</div>', unsafe_allow_html=True)
-st.markdown('<div class="doc-sub">Real-Time Telemetry Stream · Multi-Family Risk Classifier · Asymmetric Cost Calibration · SHAP Explainability</div>', unsafe_allow_html=True)
-st.markdown('<div class="dim-line">← MASTER WORKSPACE · 4 Hz TIME-SERIES & 39 BIOMARKERS · DUAL-STREAM CDSS →</div>', unsafe_allow_html=True)
-
-st.markdown("""<div class="redline-box">
-<strong>[CLINICAL SAFETY NOTE]</strong> Asymmetric cost matrix enforced:
-<strong>Cost(FN) = 10 × Cost(FP)</strong>. Pathologic safety threshold:
-<strong>P ≥ 0.110</strong> → Recall 94.29% (33/35 distress cases caught on held-out test).
-</div>""", unsafe_allow_html=True)
+st.markdown('<div class="doc-sub">Continuous Real-Time Telemetry Stream · Multi-Family Risk Classifier · Asymmetric Cost Calibration · SHAP Explainability</div>', unsafe_allow_html=True)
+st.markdown('<div class="dim-line">← REAL-TIME 4 Hz SIGNAL ENGINE · 39 BIOMARKERS · LIVE BED-SIDE TELEMETRY CDSS →</div>', unsafe_allow_html=True)
 
 # ── Top controls strip ────────────────────────────────────────────────────────
 cc1, cc2, cc3, cc4 = st.columns([1.4, 1.4, 1.0, 1.0])
@@ -161,23 +163,17 @@ with cc1:
         ["LightGBM (Optuna-Tuned)", "Random Forest", "SVM (RBF Kernel)"])
 with cc2:
     st.markdown("<div style='font-size:10px;color:#00ffff;'>STREAMING ARCHITECTURE</div>", unsafe_allow_html=True)
-    st.markdown("<div style='font-weight:700;color:#00ffff;'>4 Hz Continuous / Sliding Window</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-weight:700;color:#00ffff;'>Continuous 4 Hz / Rolling FIGO Window</div>", unsafe_allow_html=True)
 with cc3:
-    st.markdown("<div style='font-size:10px;color:#00ffff;'>COHORT (HELD-OUT)</div>", unsafe_allow_html=True)
-    st.markdown("<div style='font-weight:700;'>N=426 · 332/59/35</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:10px;color:#00ffff;'>EVALUATION COHORT</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-weight:700;'>N=426 Held-Out (332/59/35)</div>", unsafe_allow_html=True)
 with cc4:
-    st.markdown("<div style='font-size:10px;color:#00ffff;'>CHAMPION ACCURACY</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:10px;color:#00ffff;'>CHAMPION CV SCORE</div>", unsafe_allow_html=True)
     st.markdown("<div style='font-weight:700;color:#00ff88;'>Macro F1 = 0.9202 (Optuna)</div>", unsafe_allow_html=True)
-
-# ── Default values per preset for manual tab ──────────────────────────────────
-defaults = dict(LB=135., AC=.003, FM=0., UC=.005, DL=0., DS=0., DP=0.,
-                ASTV=28., MSTV=1.8, ALTV=0., MLTV=8.5, Width=60., Min=110.,
-                Max=170., Nmax=3., Nzeros=0., Mode=138., Mean=136.,
-                Median=137., Variance=8., Tendency=0.)
 
 # ── Main panel with 6 Tabs ────────────────────────────────────────────────────
 tabs = st.tabs([
-    "🔴 Live ICU Telemetry",
+    "🔴 Live Automatic Telemetry",
     "📐 Manual Morphometric Drafting",
     "📊 Model Benchmark",
     "📉 Calibration & ROC",
@@ -185,173 +181,216 @@ tabs = st.tabs([
     "📋 5-Fold CV Results"
 ])
 
-# ─────────────────────────── TAB 0: LIVE ICU TELEMETRY ────────────────────────
+def render_decision_verdict(probs):
+    """
+    Clinically accurate decision logic:
+    1. Primary diagnostic category is determined by argmax (dominant class).
+    2. Asymmetric safety cutoff (P_pathologic >= 0.110) acts as an early warning alert.
+    """
+    p_n, p_s, p_p = probs
+    max_idx = np.argmax([p_n, p_s, p_p])
+
+    if max_idx == 2:
+        st.markdown(f"""
+        <div class="stamp-pathologic">
+        [ CLASS 3: PATHOLOGICAL (FIGO CATEGORY III) ]<br>
+        <span style="font-size:11px;color:#fff;">CRITICAL HYPOXIA — DOMINANT RISK {p_p*100:.1f}%</span>
+        </div>
+        """, unsafe_allow_html=True)
+    elif max_idx == 1:
+        st.markdown(f"""
+        <div class="stamp-suspect">
+        [ CLASS 2: SUSPECT / EQUIVOCAL (FIGO CATEGORY II) ]<br>
+        <span style="font-size:11px;color:#fff;">SUB-OPTIMAL VARIABILITY / ATYPICAL DECELERATIONS — PROBABILITY {p_s*100:.1f}%</span>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div class="stamp-normal">
+        [ CLASS 1: NORMAL / REASSURING (FIGO CATEGORY I) ]<br>
+        <span style="font-size:11px;color:#fff;">AUTONOMIC HOMEOSTASIS INTACT — PROBABILITY {p_n*100:.1f}%</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Asymmetric Decision Precaution Banner
+    if p_p >= 0.110 and max_idx != 2:
+        st.markdown(f"""
+        <div class="alert-precaution">
+        <strong>⚠️ PRECAUTIONARY SAFETY ALERT:</strong> Pathologic risk <strong>{p_p*100:.1f}%</strong> breaches asymmetric loss threshold (cutoff P* ≥ 11.0%). Escalate fetal heart rate surveillance.
+        </div>
+        """, unsafe_allow_html=True)
+    elif max_idx == 2:
+        st.markdown(f"""
+        <div class="alert-emergency">
+        <strong>🚨 EMERGENCY CLINICAL ALARM:</strong> Category III Distress Confirmed. Initiate intrauterine resuscitation and prepare for urgent delivery.
+        </div>
+        """, unsafe_allow_html=True)
+
+
+# ─────────────────────────── TAB 0: LIVE AUTOMATIC TELEMETRY ─────────────────
 with tabs[0]:
-    st.subheader("[ SEC 00 // REAL-TIME CONTINUOUS CTG TELEMETRY STREAM & SLIDING-WINDOW TRIAGE ]")
+    st.subheader("[ SEC 00 // REAL-TIME CONTINUOUS CTG TELEMETRY & AUTOMATIC SLIDING-WINDOW INFERENCE ]")
     st.markdown("""
-    <div style='font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:12px;'>
-    Streams genuine <strong>continuous 4 Hz cardiotocograph waveforms</strong> (from PhysioNet CTU-UHB intrapartum database).
-    A rolling clinical window continuously extracts all 39 FIGO morphometrics and delivers real-time risk predictions.
+    <div style='font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:10px;'>
+    Streams genuine <strong>4 Hz continuous intrapartum waveforms</strong> from the PhysioNet CTU-UHB database.
+    Click <strong>'▶️ Start Live Automatic Stream'</strong> to watch the monitor stream automatically in real-time.
     </div>
     """, unsafe_allow_html=True)
 
-    c_case, c_win, c_ctl = st.columns([1.8, 1.0, 1.2])
-    with c_case:
+    t_case, t_win = st.columns([2.0, 1.0])
+    with t_case:
         patient_case = st.selectbox(
-            "🏥 SELECT PATIENT RECORDING (PHYSIOMETRIC FEED)",
+            "🏥 CHOOSE CLINICAL PATIENT STREAM",
             [
-                "PhysioNet Record 1002 — Severe Intrapartum Hypoxia / Acidosis (Umbilical pH 7.00, BE -12)",
-                "PhysioNet Record 1001 — Moderate Fetal Acidemia / Variable Decelerations (Umbilical pH 7.14)",
                 "PhysioNet Record 1003 — Healthy Reassuring Term Labor (Umbilical pH 7.20, Apgar 9)",
+                "PhysioNet Record 1001 — Moderate Fetal Acidemia / Variable Decels (Umbilical pH 7.14)",
+                "PhysioNet Record 1002 — Severe Intrapartum Hypoxia / Acidosis (Umbilical pH 7.00, BE -12)",
                 "Synthetic Live Telemetry — Progressive Autonomic Distress Sequence"
             ]
         )
-    with c_win:
+    with t_win:
         win_mins = st.selectbox("⏱️ SLIDING ANALYSIS WINDOW", [5, 10, 15], index=1)
-    with c_ctl:
-        st.markdown("<div style='font-size:11px;color:#00ffff;'>TELEMETRY STREAM CONTROLS</div>", unsafe_allow_html=True)
-        step_btn = st.button("⏩ Advance Stream (+2 mins)")
 
-    # Load continuous telemetry signal
     fhr_full, uc_full, fs = get_cached_telemetry(patient_case)
     total_mins = int(len(fhr_full) / (fs * 60))
 
-    if 'labor_min' not in st.session_state:
-        st.session_state.labor_min = min(win_mins + 10, total_mins)
+    if 'stream_min' not in st.session_state:
+        st.session_state.stream_min = min(win_mins + 5, total_mins)
+    if 'is_streaming' not in st.session_state:
+        st.session_state.is_streaming = False
 
-    if step_btn:
-        st.session_state.labor_min = min(st.session_state.labor_min + 2, total_mins)
+    # Live playback controls
+    btn_c1, btn_c2, btn_c3, btn_c4 = st.columns([1.2, 1.0, 1.2, 1.6])
+    with btn_c1:
+        if st.button("▶️ Start Live Stream", key="btn_play", use_container_width=True):
+            st.session_state.is_streaming = True
+    with btn_c2:
+        if st.button("⏸️ Pause", key="btn_pause", use_container_width=True):
+            st.session_state.is_streaming = False
+    with btn_c3:
+        if st.button("⏮️ Reset to Start", key="btn_reset", use_container_width=True):
+            st.session_state.stream_min = win_mins + 2
+            st.session_state.is_streaming = False
+    with btn_c4:
+        stream_speed = st.select_slider("⚡ Stream Speed", options=["1x (Paced)", "3x (Smooth)", "6x (Rapid)"], value="3x (Smooth)")
 
-    scrub_col, val_col = st.columns([3.5, 1.0])
-    with scrub_col:
-        current_min = st.slider(
-            "LABOR ELAPSED TIME SCRUBBER (MINUTES)",
-            min_value=int(win_mins),
-            max_value=max(int(total_mins), int(win_mins) + 1),
-            value=int(st.session_state.labor_min),
-            step=1
-        )
-        st.session_state.labor_min = current_min
-    with val_col:
-        st.markdown(f"<div style='font-size:12px;padding-top:24px;color:#00ffff;'>TIMELINE: <strong>{current_min} / {total_mins} min</strong></div>", unsafe_allow_html=True)
+    scrub_val = st.slider(
+        "MANUAL LABOR TIMELINE SEEKER (MINUTES)",
+        min_value=int(win_mins),
+        max_value=max(int(total_mins), int(win_mins) + 1),
+        value=int(st.session_state.stream_min),
+        step=1
+    )
+    if not st.session_state.is_streaming:
+        st.session_state.stream_min = scrub_val
 
-    # Slice the sliding window
-    end_sample = int(current_min * 60 * fs)
-    start_sample = max(0, end_sample - int(win_mins * 60 * fs))
-    fhr_window = fhr_full[start_sample:end_sample]
-    uc_window = uc_full[start_sample:end_sample]
+    # Automatic Streaming Loop Container
+    live_container = st.empty()
 
-    # Display context (show last 25 minutes of waveforms)
-    context_mins = 25
-    ctx_start = max(0, end_sample - int(context_mins * 60 * fs))
-    t_axis = np.linspace(max(0, current_min - context_mins), current_min, end_sample - ctx_start)
-    fhr_ctx = fhr_full[ctx_start:end_sample]
-    uc_ctx = uc_full[ctx_start:end_sample]
+    speed_delay = 0.8 if "1x" in stream_speed else (0.4 if "3x" in stream_speed else 0.2)
 
-    # ── Oscilloscope Figure ──
-    fig, (ax_fhr, ax_uc) = plt.subplots(2, 1, figsize=(11, 4.2), sharex=True, gridspec_kw={'height_ratios': [2.2, 1.0]})
-    fig.patch.set_facecolor('#001e38')
-    for ax in (ax_fhr, ax_uc):
-        ax.set_facecolor('#001426')
-        ax.tick_params(colors='#00ffff', labelsize=8)
-        ax.grid(True, color='#00ffff', alpha=0.15, linestyle='--')
+    def draw_telemetry_frame(cur_min):
+        end_sample = int(cur_min * 60 * fs)
+        start_sample = max(0, end_sample - int(win_mins * 60 * fs))
+        fhr_window = fhr_full[start_sample:end_sample]
+        uc_window = uc_full[start_sample:end_sample]
 
-    # FHR Plot
-    ax_fhr.axhspan(110, 160, color='#00ff88', alpha=0.10, label='FIGO Normal Band (110-160 bpm)')
-    ax_fhr.axhline(110, color='#ff3333', linestyle=':', alpha=0.6, label='Bradycardia Threshold (<110)')
-    ax_fhr.axhline(160, color='#ffcc00', linestyle=':', alpha=0.6, label='Tachycardia Threshold (>160)')
-    ax_fhr.plot(t_axis, fhr_ctx, color='#00ffff', linewidth=1.1, label='Live FHR (bpm)')
-    ax_fhr.axvspan(current_min - win_mins, current_min, color='#00ffff', alpha=0.12, label=f'Active Window ({win_mins} min)')
-    ax_fhr.set_ylim(60, 200)
-    ax_fhr.set_ylabel('FHR (bpm)', color='#00ffff', fontweight='bold', fontsize=9)
-    ax_fhr.legend(loc='upper right', fontsize=7, facecolor='#001e38', edgecolor='#00ffff', labelcolor='#ffffff')
+        context_mins = 25
+        ctx_start = max(0, end_sample - int(context_mins * 60 * fs))
+        t_axis = np.linspace(max(0, cur_min - context_mins), cur_min, end_sample - ctx_start)
+        fhr_ctx = fhr_full[ctx_start:end_sample]
+        uc_ctx = uc_full[ctx_start:end_sample]
 
-    # UC / Tocogram Plot
-    ax_uc.plot(t_axis, uc_ctx, color='#ec4899', linewidth=1.2, label='Tocogram (Contractions)')
-    ax_uc.axvspan(current_min - win_mins, current_min, color='#00ffff', alpha=0.12)
-    ax_uc.set_ylim(0, 100)
-    ax_uc.set_ylabel('UC (mmHg)', color='#ec4899', fontweight='bold', fontsize=9)
-    ax_uc.set_xlabel('Elapsed Labor Time (Minutes)', color='#00ffff', fontsize=9)
-    ax_uc.legend(loc='upper right', fontsize=7, facecolor='#001e38', edgecolor='#00ffff', labelcolor='#ffffff')
+        with live_container.container():
+            # Oscilloscope plot
+            fig, (ax_fhr, ax_uc) = plt.subplots(2, 1, figsize=(11, 4.0), sharex=True, gridspec_kw={'height_ratios': [2.2, 1.0]})
+            fig.patch.set_facecolor('#001e38')
+            for ax in (ax_fhr, ax_uc):
+                ax.set_facecolor('#001426')
+                ax.tick_params(colors='#00ffff', labelsize=8)
+                ax.grid(True, color='#00ffff', alpha=0.15, linestyle='--')
 
-    plt.tight_layout()
-    st.pyplot(fig)
-    plt.close()
+            # FHR Plot
+            ax_fhr.axhspan(110, 160, color='#00ff88', alpha=0.12, label='FIGO Reassuring Band (110-160 bpm)')
+            ax_fhr.axhline(110, color='#ff3333', linestyle=':', alpha=0.6, label='Bradycardia (<110)')
+            ax_fhr.axhline(160, color='#ffcc00', linestyle=':', alpha=0.6, label='Tachycardia (>160)')
+            ax_fhr.plot(t_axis, fhr_ctx, color='#00ffff', linewidth=1.1, label='Live FHR (bpm)')
+            ax_fhr.axvspan(cur_min - win_mins, cur_min, color='#00ffff', alpha=0.14, label=f'Sliding Window ({win_mins} min)')
+            ax_fhr.set_ylim(60, 200)
+            ax_fhr.set_ylabel('FHR (bpm)', color='#00ffff', fontweight='bold', fontsize=9)
+            ax_fhr.legend(loc='upper right', fontsize=7, facecolor='#001e38', edgecolor='#00ffff', labelcolor='#ffffff')
 
-    # Real-Time Feature Extraction & Inference
-    if DATA_OK and len(fhr_window) > 20:
-        feat_dict = extract_sliding_window_features(fhr_window, uc_window, fs)
-        vec = np.array([feat_dict.get(f, 0.) for f in bundle['feat_names']]).reshape(1, -1)
+            # UC Plot
+            ax_uc.plot(t_axis, uc_ctx, color='#ec4899', linewidth=1.2, label='Tocogram (Contractions)')
+            ax_uc.axvspan(cur_min - win_mins, cur_min, color='#00ffff', alpha=0.14)
+            ax_uc.set_ylim(0, 100)
+            ax_uc.set_ylabel('UC (mmHg)', color='#ec4899', fontweight='bold', fontsize=9)
+            ax_uc.set_xlabel(f'Labor Timeline — Elapsed Time: {cur_min} mins / {total_mins} mins', color='#00ffff', fontsize=9)
+            ax_uc.legend(loc='upper right', fontsize=7, facecolor='#001e38', edgecolor='#00ffff', labelcolor='#ffffff')
 
-        if "LightGBM" in model_choice:
-            probs = bundle['lgb'].predict_proba(vec)[0]
-        elif "Random Forest" in model_choice:
-            probs = bundle['rf'].predict_proba(vec)[0]
-        else:
-            probs = bundle['svm'].predict_proba(bundle['scaler'].transform(vec))[0]
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
 
-        p_n, p_s, p_p = probs
+            # Live Feature Extraction & Model Inference
+            if DATA_OK and len(fhr_window) > 20:
+                feat_dict = extract_sliding_window_features(fhr_window, uc_window, fs)
+                vec = np.array([feat_dict.get(f, 0.) for f in bundle['feat_names']]).reshape(1, -1)
 
-        # Live Alarm Banner & Status
-        o_left, o_right = st.columns([1.3, 1.0])
-        with o_left:
-            if p_p >= 0.110:
-                st.markdown(f"""
-                <div class="alarm-banner">
-                🚨 FIGO CATEGORY III: PATHOLOGICAL FETAL DISTRESS (Risk: {p_p*100:.1f}%)<br>
-                <span style="font-size:11px;font-weight:400;color:#fff;">
-                Severe autonomic decoupling / late decelerations detected. Cost-optimal safety threshold breached (P ≥ 0.110).
-                RECOMMENDATION: Immediate intrauterine resuscitation (maternal oxygen, stop oxytocin) & prepare emergency delivery.
-                </span>
-                </div>
-                """, unsafe_allow_html=True)
-            elif p_s >= 0.35:
-                st.markdown(f"""
-                <div class="stamp-suspect">
-                ⚠️ FIGO CATEGORY II: SUSPECT / EQUIVOCAL CTG (Risk: {p_s*100:.1f}%)<br>
-                <span style="font-size:11px;font-weight:400;color:#fff;">
-                Sub-optimal variability or atypical decelerations. ESCALATE SURVEILLANCE & assess maternal position.
-                </span>
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown(f"""
-                <div class="stamp-normal">
-                ✅ FIGO CATEGORY I: NORMAL REASSURING TRACE (Normal: {p_n*100:.1f}%)<br>
-                <span style="font-size:11px;font-weight:400;color:#fff;">
-                Autonomic homeostasis intact. Accelerations present, physiological baseline stable.
-                </span>
-                </div>
-                """, unsafe_allow_html=True)
+                if "LightGBM" in model_choice:
+                    probs = bundle['lgb'].predict_proba(vec)[0]
+                elif "Random Forest" in model_choice:
+                    probs = bundle['rf'].predict_proba(vec)[0]
+                else:
+                    probs = bundle['svm'].predict_proba(bundle['scaler'].transform(vec))[0]
 
-        with o_right:
-            # Probability Bar Chart
-            fig_p, ax_p = plt.subplots(figsize=(5, 1.8))
-            fig_p.patch.set_facecolor('#001e38'); ax_p.set_facecolor('#001426')
-            import seaborn as sns
-            prob_df = pd.DataFrame({'State':['NORMAL','SUSPECT','PATHOLOGIC'], 'P':[p_n, p_s, p_p]})
-            sns.barplot(x='P', y='State', data=prob_df, palette=['#00ff88','#ffcc00','#ff3333'], ax=ax_p, edgecolor='#00ffff', linewidth=0.8)
-            for i, v in enumerate([p_n, p_s, p_p]):
-                ax_p.text(v+.02, i, f'{v*100:.1f}%', va='center', fontweight='bold', color='#fff', fontfamily='monospace', fontsize=8)
-            ax_p.set_xlim(0, 1.18); ax_p.set_xlabel('Live Posterior Probability', color='#00ffff', fontsize=8)
-            ax_p.set_ylabel(''); ax_p.tick_params(colors='#00ffff', labelsize=8)
-            plt.tight_layout(); st.pyplot(fig_p); plt.close()
+                p_n, p_s, p_p = probs
 
-        # Live Real-Time Clinical Biomarkers
-        st.markdown("<div style='font-size:11px;color:#00ffff;margin-top:8px;'>LIVE SLIDING-WINDOW BIOMARKER TELEMETRY (DYNAMICALLY COMPUTED FROM RAW 4 Hz SIGNAL)</div>", unsafe_allow_html=True)
-        m1, m2, m3, m4, m5 = st.columns(5)
-        m1.metric("Live Baseline FHR", f"{feat_dict['LB']:.1f} bpm")
-        m2.metric("Short-Term Var (ASTV)", f"{feat_dict['ASTV']:.1f}%")
-        m3.metric("Pathologic Risk (PRI)", f"{feat_dict['PRI']:.2f}")
-        m4.metric("Decel Severity (DSI)", f"{feat_dict['DSI']:.3f}")
-        m5.metric("Variability Entropy", f"{feat_dict['Variability_Entropy']:.2f} bits")
+                res_l, res_r = st.columns([1.3, 1.0])
+                with res_l:
+                    render_decision_verdict(probs)
 
-# ─────────────────────────── TAB 1: STATIC DRAFTING ──────────────────────────
+                with res_r:
+                    fig_p, ax_p = plt.subplots(figsize=(5, 1.8))
+                    fig_p.patch.set_facecolor('#001e38'); ax_p.set_facecolor('#001426')
+                    prob_df = pd.DataFrame({'State':['NORMAL','SUSPECT','PATHOLOGIC'], 'P':[p_n, p_s, p_p]})
+                    sns.barplot(x='P', y='State', data=prob_df, palette=['#00ff88','#ffcc00','#ff3333'], ax=ax_p, edgecolor='#00ffff', linewidth=0.8)
+                    for i, v in enumerate([p_n, p_s, p_p]):
+                        ax_p.text(v+.02, i, f'{v*100:.1f}%', va='center', fontweight='bold', color='#fff', fontfamily='monospace', fontsize=8)
+                    ax_p.set_xlim(0, 1.18); ax_p.set_xlabel('Live Posterior Probability', color='#00ffff', fontsize=8)
+                    ax_p.set_ylabel(''); ax_p.tick_params(colors='#00ffff', labelsize=8)
+                    plt.tight_layout(); st.pyplot(fig_p); plt.close()
+
+                m1, m2, m3, m4, m5 = st.columns(5)
+                m1.metric("Live Baseline FHR", f"{feat_dict['LB']:.1f} bpm")
+                m2.metric("Short-Term Var (ASTV)", f"{feat_dict['ASTV']:.1f}%")
+                m3.metric("Pathologic Risk (PRI)", f"{feat_dict['PRI']:.2f}")
+                m4.metric("Decel Severity (DSI)", f"{feat_dict['DSI']:.3f}")
+                m5.metric("Variability Entropy", f"{feat_dict['Variability_Entropy']:.2f} bits")
+
+    # Render current frame or run auto-stream loop
+    if st.session_state.is_streaming:
+        for m in range(int(st.session_state.stream_min), total_mins + 1):
+            st.session_state.stream_min = m
+            draw_telemetry_frame(m)
+            time.sleep(speed_delay)
+        st.session_state.is_streaming = False
+        st.rerun()
+    else:
+        draw_telemetry_frame(st.session_state.stream_min)
+
+
+# ─────────────────────────── TAB 1: MANUAL MORPHOMETRIC DRAFTING ─────────────
 with tabs[1]:
     preset_box = st.selectbox("📋 CHOOSE CLINICAL SCENARIO PRESET",
         ["Custom Input", "Preset A — Normal (Reassuring)",
          "Preset B — Suspect (Borderline)", "Preset C — Pathologic (Distress)"],
         key="static_preset")
+
+    defaults = dict(LB=135., AC=.003, FM=0., UC=.005, DL=0., DS=0., DP=0.,
+                    ASTV=28., MSTV=1.8, ALTV=0., MLTV=8.5, Width=60., Min=110.,
+                    Max=170., Nmax=3., Nzeros=0., Mode=138., Mean=136.,
+                    Median=137., Variance=8., Tendency=0.)
 
     if "Normal" in preset_box:
         defaults.update(LB=135., AC=.005, ASTV=22., ALTV=0., DP=0., MSTV=2.1)
@@ -404,10 +443,10 @@ with tabs[1]:
             inp['STV_LTV_Ratio'] = inp['MSTV']/(inp['MLTV']+eps)
             inp['Hist_Skew_Proxy'] = (inp['Mode']-inp['Mean'])/(inp['Width']+eps)
             inp['Zero_Crossing_Density'] = inp['Nzeros']/(inp['Width']+eps)
-            import scipy.stats as sst
             p_arr = np.array([max(inp['ASTV'],.01), max(inp['ALTV'],.01),
                               max(100-inp['ASTV']-inp['ALTV'],.01)])
             p_arr /= p_arr.sum()
+            import scipy.stats as sst
             inp['Variability_Entropy'] = float(sst.entropy(p_arr, base=2))
 
             vec = np.array([inp.get(f, 0.) for f in feat_names]).reshape(1, -1)
@@ -420,23 +459,11 @@ with tabs[1]:
                 probs = bundle['svm'].predict_proba(bundle['scaler'].transform(vec))[0]
 
             p_n, p_s, p_p = probs
-            if p_p >= .110:
-                st.markdown('<div class="stamp-pathologic">[ CLASS 3: PATHOLOGICAL ]<br>'
-                            '<span style="font-size:10px;color:#fff;">CRITICAL — PREPARE FOR EMERGENCY DELIVERY</span></div>',
-                            unsafe_allow_html=True)
-            elif p_s >= .35:
-                st.markdown('<div class="stamp-suspect">[ CLASS 2: SUSPECT (EQUIVOCAL) ]<br>'
-                            '<span style="font-size:10px;color:#fff;">CAUTION — ESCALATE CTG SURVEILLANCE</span></div>',
-                            unsafe_allow_html=True)
-            else:
-                st.markdown('<div class="stamp-normal">[ CLASS 1: NORMAL (REASSURING) ]<br>'
-                            '<span style="font-size:10px;color:#fff;">HOMEOSTASIS INTACT — CONTINUE MONITORING</span></div>',
-                            unsafe_allow_html=True)
+            render_decision_verdict(probs)
 
             st.markdown("<br>", unsafe_allow_html=True)
             fig, ax = plt.subplots(figsize=(6.5, 2.4))
             fig.patch.set_facecolor('#002646'); ax.set_facecolor('#001a33')
-            import seaborn as sns
             prob_df = pd.DataFrame({'State':['NORMAL','SUSPECT','PATHOLOGIC'], 'P':[p_n, p_s, p_p]})
             sns.barplot(x='P', y='State', data=prob_df, palette=['#00ff88','#ffcc00','#ff3333'],
                         ax=ax, edgecolor='#00ffff', linewidth=1)
@@ -538,7 +565,7 @@ st.markdown("""
 <div class="btbar">
   <div class="btbar-brand">📐 CTG-OS // REAL-TIME FETAL TELEMETRY</div>
   <div class="btbar-pills">
-    <div class="btbar-pill">🔴 LIVE TELEMETRY</div>
+    <div class="btbar-pill">🔴 LIVE AUTO STREAM</div>
     <div class="btbar-pill">📐 MANUAL DRAFTING</div>
     <div class="btbar-pill">📊 BENCHMARK</div>
     <div class="btbar-pill">📉 CALIBRATION</div>
@@ -546,8 +573,8 @@ st.markdown("""
     <div class="btbar-pill">📋 CV RESULTS</div>
   </div>
   <div class="btbar-tray">
-    <span class="btbar-lock">🛡️ P≥0.110 · RECALL 94.29%</span>
-    <span class="btbar-info">4 Hz CONTINUOUS STREAM // PHYSIONET CTU-UHB</span>
+    <span class="btbar-lock">🛡️ P≥0.110 ASYMMETRIC SAFETY CUTOFF</span>
+    <span class="btbar-info">PHYSIONET CTU-UHB 4 Hz DUAL-CHANNEL</span>
   </div>
 </div>
 """, unsafe_allow_html=True)
