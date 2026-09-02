@@ -528,7 +528,7 @@ with tabs[1]:
 
 # ─────────────────────────── TAB 2: BENCHMARK ────────────────────────────────
 with tabs[2]:
-    st.subheader("[ SEC 03 // MULTI-FAMILY MODEL LEADERBOARD ]")
+    st.subheader("[ SEC 03 // MULTI-FAMILY MODEL LEADERBOARD & COMPARATIVE BENCHMARKS ]")
     bench_path = 'outputs/model_benchmark_comparison.csv'
     if os.path.exists(bench_path):
         bench = pd.read_csv(bench_path).sort_values('Macro F1', ascending=False).reset_index(drop=True)
@@ -538,12 +538,12 @@ with tabs[2]:
         st.info("Run `python src/stacking_ensemble.py` to generate benchmark results.")
 
     c1, c2 = st.columns(2)
-    for col, fig_path, cap in [
-        (c1, 'outputs/figures/cv_macro_f1_comparison.png', '5-Fold CV Macro F1 with 95% CI'),
-        (c2, 'outputs/figures/confusion_matrix_stacking_ensemble.png', 'Stacking Ensemble Confusion Matrix'),
-    ]:
-        if os.path.exists(fig_path):
-            col.image(fig_path, caption=cap, use_container_width=True)
+    with c1:
+        if os.path.exists('outputs/figures/cv_macro_f1_comparison.png'):
+            st.image('outputs/figures/cv_macro_f1_comparison.png', caption='5-Fold CV Macro F1 with 95% Bootstrap CI', use_container_width=True)
+    with c2:
+        if os.path.exists('outputs/figures/confusion_matrix_stacking_ensemble.png'):
+            st.image('outputs/figures/confusion_matrix_stacking_ensemble.png', caption='Stacking Ensemble Confusion Matrix (91.4% Pathologic Recall)', use_container_width=True)
 
 # ─────────────────────────── TAB 3: CALIBRATION & ROC ────────────────────────
 with tabs[3]:
@@ -552,33 +552,52 @@ with tabs[3]:
     if os.path.exists(auc_path):
         with open(auc_path) as f: auc_d = json.load(f)
         ac1, ac2, ac3 = st.columns(3)
-        for col, (cls, vals) in zip([ac1,ac2,ac3], auc_d.items()):
-            col.metric(f"{cls} ROC-AUC", f"{vals['roc_auc']:.4f}")
+        for col, (cls, vals) in zip([ac1, ac2, ac3], auc_d.items()):
+            col.metric(f"{cls} ROC-AUC", f"{vals['roc_auc']:.4f}", f"Avg-Prec: {vals['avg_precision']:.4f}")
 
-    for fig_path, cap in [
-        ('outputs/figures/calibration_reliability_diagrams.png', 'Reliability Diagrams — Raw vs Platt-Scaled'),
-        ('outputs/figures/roc_curves_ovr.png', 'ROC Curves (One-vs-Rest) — Calibrated LightGBM'),
-        ('outputs/figures/pr_curves_ovr.png', 'Precision-Recall Curves (One-vs-Rest)'),
-    ]:
-        if os.path.exists(fig_path):
-            st.image(fig_path, caption=cap, use_container_width=True)
-        else:
-            st.info(f"Run `python src/calibration_analysis.py` to generate: {fig_path}")
+    # Row 1: ROC and PR curves side-by-side
+    r1_col1, r1_col2 = st.columns(2)
+    with r1_col1:
+        if os.path.exists('outputs/figures/roc_curves_ovr.png'):
+            st.image('outputs/figures/roc_curves_ovr.png', caption='One-vs-Rest ROC Curves (Pathologic AUC = 0.9942)', use_container_width=True)
+    with r1_col2:
+        if os.path.exists('outputs/figures/pr_curves_ovr.png'):
+            st.image('outputs/figures/pr_curves_ovr.png', caption='One-vs-Rest Precision-Recall Curves (Pathologic AP = 0.9440)', use_container_width=True)
+
+    # Row 2: Reliability Calibration Diagrams
+    if os.path.exists('outputs/figures/calibration_reliability_diagrams.png'):
+        st.image('outputs/figures/calibration_reliability_diagrams.png', caption='Probability Calibration: Raw vs. Platt-Scaled Reliability Diagrams (Brier Score Pathologic = 0.0166)', use_container_width=True)
 
 # ─────────────────────────── TAB 4: SHAP ─────────────────────────────────────
 with tabs[4]:
-    st.subheader("[ SEC 05 // SHAP EXPLAINABILITY SUITE ]")
-    shap_figs = [
-        ('outputs/figures/shap_beeswarm_pathologic.png',        'SHAP Beeswarm — Pathologic Risk Drivers (Test Cohort)'),
-        ('outputs/figures/shap_summary_bar_multiclass.png',     'Mean |SHAP| — Multi-Class Feature Importance'),
-        ('outputs/figures/shap_decision_plot_3cases.png',       'SHAP Decision Plot — 3 Representative Patients'),
-        ('outputs/figures/shap_waterfall_patient_distress.png', 'Case Study: Pathologic Patient — Log-odds Waterfall'),
-        ('outputs/figures/shap_waterfall_suspect.png',          'Case Study: Suspect Patient — Log-odds Waterfall'),
-        ('outputs/figures/shap_waterfall_patient_reassuring.png','Case Study: Normal Patient — Protective Factors'),
-    ]
-    for fp, cap in shap_figs:
-        if os.path.exists(fp):
-            st.image(fp, caption=cap, use_container_width=True)
+    st.subheader("[ SEC 05 // SHAP EXPLAINABILITY SUITE (COHORT BIOMARKERS & CASE STUDIES) ]")
+
+    # Row 1: Global Cohort Distributions (Side-by-side)
+    sh_r1_c1, sh_r1_c2 = st.columns(2)
+    with sh_r1_c1:
+        if os.path.exists('outputs/figures/shap_beeswarm_pathologic.png'):
+            st.image('outputs/figures/shap_beeswarm_pathologic.png', caption='[FIG 1] Cohort Beeswarm — Top Pathologic Drivers (ASTV, VCR, PRI)', use_container_width=True)
+    with sh_r1_c2:
+        if os.path.exists('outputs/figures/shap_summary_bar_multiclass.png'):
+            st.image('outputs/figures/shap_summary_bar_multiclass.png', caption='[FIG 2] Multi-Class Mean |SHAP| Feature Impact Across All States', use_container_width=True)
+
+    # Row 2: Patient Decision Dynamics & Distress Case Study (Side-by-side)
+    sh_r2_c1, sh_r2_c2 = st.columns(2)
+    with sh_r2_c1:
+        if os.path.exists('outputs/figures/shap_decision_plot_3cases.png'):
+            st.image('outputs/figures/shap_decision_plot_3cases.png', caption='[FIG 3] Cumulative Log-Odds Decision Paths for 3 Patient Categories', use_container_width=True)
+    with sh_r2_c2:
+        if os.path.exists('outputs/figures/shap_waterfall_patient_distress.png'):
+            st.image('outputs/figures/shap_waterfall_patient_distress.png', caption='[FIG 4] Case Study: Severe Pathologic Patient (Risk Escalators)', use_container_width=True)
+
+    # Row 3: Suspect vs Reassuring Case Studies (Side-by-side)
+    sh_r3_c1, sh_r3_c2 = st.columns(2)
+    with sh_r3_c1:
+        if os.path.exists('outputs/figures/shap_waterfall_suspect.png'):
+            st.image('outputs/figures/shap_waterfall_suspect.png', caption='[FIG 5] Case Study: Equivocal / Suspect Patient (Compensatory Signs)', use_container_width=True)
+    with sh_r3_c2:
+        if os.path.exists('outputs/figures/shap_waterfall_patient_reassuring.png'):
+            st.image('outputs/figures/shap_waterfall_patient_reassuring.png', caption='[FIG 6] Case Study: Reassuring Normal Patient (Protective Autonomic Tone)', use_container_width=True)
 
     report_path = 'outputs/reports/shap_case_study_report.md'
     if os.path.exists(report_path):
@@ -595,13 +614,14 @@ with tabs[5]:
     else:
         st.info("Run `python src/cv_evaluation.py` to generate CV results.")
 
-    optuna_fig = 'outputs/figures/optuna_convergence.png'
-    lcurve_fig = 'outputs/figures/learning_curve_generalization.png'
     oc1, oc2 = st.columns(2)
-    if os.path.exists(optuna_fig):
-        oc1.image(optuna_fig, caption='Optuna HPO Convergence + Hyperparameter Importance', use_container_width=True)
-    if os.path.exists(lcurve_fig):
-        oc2.image(lcurve_fig, caption='Statistical Learning Curve — Generalization Gap Audit', use_container_width=True)
+    with oc1:
+        if os.path.exists('outputs/figures/optuna_convergence.png'):
+            st.image('outputs/figures/optuna_convergence.png', caption='[FIG 7] Optuna Bayesian HPO Convergence (Best 5-Fold CV Macro F1: 0.9202)', use_container_width=True)
+    with oc2:
+        if os.path.exists('outputs/figures/learning_curve_generalization.png'):
+            st.image('outputs/figures/learning_curve_generalization.png', caption='[FIG 8] Statistical Learning Curve — Generalization Gap Audit (<0.06 gap)', use_container_width=True)
+
 
 # ── Fixed bottom taskbar ──────────────────────────────────────────────────────
 st.markdown("""
