@@ -1,154 +1,247 @@
 """
-PHASE A: Advanced Clinical Feature Engineering (v2)
-Expands feature space from 6 engineered features to 15+
-All features grounded in FIGO/ACOG cardiotocography pathophysiology.
+PHASE A: Advanced Clinical Feature Engineering
+Unified canonical feature engineering module for training and serving.
+All 18 engineered features are grounded in FIGO 2015 / ACOG clinical cardiotocography.
+
+Zero train/serve skew: used identically in:
+  - Batch dataset preparation (DataFrame)
+  - Real-time sliding-window telemetry (src/live_stream_engine.py)
+  - Interactive clinical drafting (app.py)
 """
 import os
 import numpy as np
 import pandas as pd
 from scipy.stats import entropy as scipy_entropy
 
-def engineer_features_v2(df: pd.DataFrame) -> pd.DataFrame:
+BASE_FEATURE_NAMES = [
+    'LB', 'AC', 'FM', 'UC', 'DL', 'DS', 'DP',
+    'ASTV', 'MSTV', 'ALTV', 'MLTV',
+    'Width', 'Min', 'Max', 'Nmax', 'Nzeros',
+    'Mode', 'Mean', 'Median', 'Variance', 'Tendency'
+]
+
+DERIVED_FEATURE_NAMES = [
+    'DSI', 'VCR', 'FHR_Dev', 'Contraction_Decel_Coupling',
+    'Autonomic_Reactivity_Index', 'Hist_Spread_Ratio',
+    'PRI', 'Decel_Pattern_Severity', 'Autonomic_Balance_Ratio',
+    'FHR_Instability_Score', 'UC_AC_Coupling', 'Morphological_Complexity',
+    'Contraction_Load_Index', 'Basal_Reactivity_Score',
+    'STV_LTV_Ratio', 'Hist_Skew_Proxy', 'Zero_Crossing_Density',
+    'Variability_Entropy'
+]
+
+ALL_FEATURE_NAMES = BASE_FEATURE_NAMES + DERIVED_FEATURE_NAMES
+
+
+def compute_derived_features(data):
     """
-    Applies the full v2 feature engineering pipeline to a raw CTG dataframe.
-    Input columns expected: LB, AC, FM, UC, DL, DS, DP, ASTV, MSTV, ALTV, MLTV,
-                            Width, Min, Max, Nmax, Nzeros, Mode, Mean, Median, Variance, Tendency
+    Computes all 18 derived clinical biomarkers for cardiotocography.
+    Accepts either:
+      - pd.DataFrame: vectorized operations across all rows (training/batch).
+      - dict or pd.Series: scalar operations for a single patient (serving/UI).
+    Returns the updated data with derived features added.
     """
-    df = df.copy()
     eps = 1e-6
 
-    # --- ORIGINAL v1 FEATURES ---
-    # Deceleration Severity Index: weights prolonged > severe > light decelerations
-    # Normalised by contraction frequency to measure coupling intensity
-    df['DSI'] = (df['DL'] + 2.0 * df['DS'] + 3.0 * df['DP']) / (df['UC'] + eps)
+    if isinstance(data, pd.DataFrame):
+        df = data.copy()
 
-    # Variability Collapse Ratio: cross-multiplies short and long term abnormal
-    # variability against their mean counterparts — acute autonomic failure signal
-    df['VCR'] = (df['ASTV'] * df['ALTV']) / (df['MSTV'] * df['MLTV'] + eps)
+        # 1. Deceleration Severity Index (DSI)
+        df['DSI'] = (df['DL'] + 2.0 * df['DS'] + 3.0 * df['DP']) / (df['UC'] + eps)
 
-    # FHR deviation from the physiological optimum of 140 bpm
-    df['FHR_Dev'] = np.abs(df['LB'] - 140.0)
+        # 2. Variability Collapse Ratio (VCR)
+        df['VCR'] = (df['ASTV'] * df['ALTV']) / (df['MSTV'] * df['MLTV'] + eps)
 
-    # Contraction-Deceleration Coupling: uterine load × total deceleration burden
-    df['Contraction_Decel_Coupling'] = df['UC'] * (df['DL'] + 2.0 * df['DS'] + 3.0 * df['DP'])
+        # 3. FHR baseline deviation from optimal 140 bpm
+        df['FHR_Dev'] = np.abs(df['LB'] - 140.0)
 
-    # Autonomic Reactivity Index: accelerations suppress pathological variance
-    df['Autonomic_Reactivity_Index'] = df['AC'] / (df['ASTV'] + eps)
+        # 4. Contraction-Deceleration Coupling
+        df['Contraction_Decel_Coupling'] = df['UC'] * (df['DL'] + 2.0 * df['DS'] + 3.0 * df['DP'])
 
-    # Histogram Spread Ratio: width of FHR histogram vs max value
-    df['Hist_Spread_Ratio'] = df['Width'] / (df['Max'] + eps)
+        # 5. Autonomic Reactivity Index
+        df['Autonomic_Reactivity_Index'] = df['AC'] / (df['ASTV'] + eps)
 
-    # --- NEW v2 FEATURES ---
+        # 6. Histogram Spread Ratio
+        df['Hist_Spread_Ratio'] = df['Width'] / (df['Max'] + eps)
 
-    # 1. Pathologic Risk Index (PRI): composite weighted risk score
-    # Derived from the FIGO 2015 classification thresholds
-    df['PRI'] = (
-        (df['ASTV'] / 100.0) * 3.0 +
-        (df['ALTV'] / 100.0) * 2.0 +
-        np.clip(df['DP'] * 1000, 0, 5) * 2.5 +
-        np.clip(df['DS'] * 500, 0, 3) * 1.5 -
-        np.clip(df['AC'] * 500, 0, 5) * 2.0 -
-        np.clip((df['MSTV'] - 1.0), 0, 5) * 0.5
-    )
+        # 7. Pathologic Risk Index (PRI) - FIGO weighted composite
+        df['PRI'] = (
+            (df['ASTV'] / 100.0) * 3.0 +
+            (df['ALTV'] / 100.0) * 2.0 +
+            np.clip(df['DP'] * 1000.0, 0, 5) * 2.5 +
+            np.clip(df['DS'] * 500.0, 0, 3) * 1.5 -
+            np.clip(df['AC'] * 500.0, 0, 5) * 2.0 -
+            np.clip((df['MSTV'] - 1.0), 0, 5) * 0.5
+        )
 
-    # 2. Deceleration Pattern Severity: detects whether decelerations are
-    # isolated (light) or cascading (severe + prolonged together)
-    df['Decel_Pattern_Severity'] = (
-        df['DL'] +
-        np.where(df['DS'] > 0, df['DS'] * 3.0, 0) +
-        np.where(df['DP'] > 0, df['DP'] * 5.0, 0)
-    )
+        # 8. Decel Pattern Severity
+        df['Decel_Pattern_Severity'] = (
+            df['DL'] +
+            np.where(df['DS'] > 0, df['DS'] * 3.0, 0) +
+            np.where(df['DP'] > 0, df['DP'] * 5.0, 0)
+        )
 
-    # 3. Autonomic Balance Ratio: ratio of reactive (AC) to pathological (ASTV+ALTV)
-    # High ratio = healthy parasympathetic tone; Low ratio = autonomic failure
-    df['Autonomic_Balance_Ratio'] = df['AC'] / ((df['ASTV'] + df['ALTV']) / 100.0 + eps)
+        # 9. Autonomic Balance Ratio
+        df['Autonomic_Balance_Ratio'] = df['AC'] / ((df['ASTV'] + df['ALTV']) / 100.0 + eps)
 
-    # 4. FHR Instability Score: combines baseline deviation with long-term variability
-    df['FHR_Instability_Score'] = df['FHR_Dev'] * (df['MLTV'] + 1.0) / (df['MSTV'] + eps)
+        # 10. FHR Instability Score
+        df['FHR_Instability_Score'] = df['FHR_Dev'] * (df['MLTV'] + 1.0) / (df['MSTV'] + eps)
 
-    # 5. UC-AC Coupling: do accelerations occur in proportion to contractions?
-    # A healthy fetal nervous system produces accelerations during contractions.
-    df['UC_AC_Coupling'] = df['AC'] / (df['UC'] + eps)
+        # 11. UC-AC Coupling
+        df['UC_AC_Coupling'] = df['AC'] / (df['UC'] + eps)
 
-    # 6. Morphological Complexity: breadth of the FHR histogram
-    # A narrow, peaked histogram = reduced variability = pathological
-    df['Morphological_Complexity'] = (df['Max'] - df['Min']) * df['Nmax'] / (df['Variance'] + eps)
+        # 12. Morphological Complexity
+        df['Morphological_Complexity'] = (df['Max'] - df['Min']) * df['Nmax'] / (df['Variance'] + eps)
 
-    # 7. Contraction Load Index: total contraction burden per minute equivalent
-    df['Contraction_Load_Index'] = df['UC'] * df['Width']
+        # 13. Contraction Load Index
+        df['Contraction_Load_Index'] = df['UC'] * df['Width']
 
-    # 8. Basal Reactivity Score: accelerations per contraction normalised to baseline
-    df['Basal_Reactivity_Score'] = (df['AC'] / (df['UC'] + eps)) * (1.0 / (df['FHR_Dev'] + 1.0))
+        # 14. Basal Reactivity Score
+        df['Basal_Reactivity_Score'] = (df['AC'] / (df['UC'] + eps)) * (1.0 / (df['FHR_Dev'] + 1.0))
 
-    # 9. Short-vs-Long Term Variability Ratio: differential between micro and macro HRV
-    # In acute hypoxia, MSTV drops sharply while MLTV may briefly spike
-    df['STV_LTV_Ratio'] = df['MSTV'] / (df['MLTV'] + eps)
+        # 15. STV/LTV Ratio
+        df['STV_LTV_Ratio'] = df['MSTV'] / (df['MLTV'] + eps)
 
-    # 10. Histogram Skew Proxy: distance between mode and mean relative to width
-    # Negative skew = more values above modal FHR = tachycardia compensation
-    df['Hist_Skew_Proxy'] = (df['Mode'] - df['Mean']) / (df['Width'] + eps)
+        # 16. Histogram Skew Proxy
+        df['Hist_Skew_Proxy'] = (df['Mode'] - df['Mean']) / (df['Width'] + eps)
 
-    # 11. Zero-crossing Density: Nzeros relative to histogram breadth
-    # High zero crossing = flat, non-reactive trace
-    df['Zero_Crossing_Density'] = df['Nzeros'] / (df['Width'] + eps)
+        # 17. Zero Crossing Density
+        df['Zero_Crossing_Density'] = df['Nzeros'] / (df['Width'] + eps)
 
-    # 12. Variability Entropy (proxy): using ASTV + ALTV distribution spread
-    # Mimics spectral entropy of HRV — low entropy = loss of complexity = hypoxia
-    def _variability_entropy(row):
-        probs = np.array([
-            max(row['ASTV'], 0.01),
-            max(row['ALTV'], 0.01),
-            max(100 - row['ASTV'] - row['ALTV'], 0.01)
+        # 18. Variability Entropy (HRV spectral complexity proxy)
+        def _row_entropy(row):
+            p = np.array([
+                max(float(row['ASTV']), 0.01),
+                max(float(row['ALTV']), 0.01),
+                max(100.0 - float(row['ASTV']) - float(row['ALTV']), 0.01)
+            ])
+            p = p / p.sum()
+            return float(scipy_entropy(p, base=2))
+
+        df['Variability_Entropy'] = df.apply(_row_entropy, axis=1)
+        return df
+
+    else:
+        # Scalar dictionary or Series
+        res = dict(data)
+
+        lb = float(res.get('LB', 140.0))
+        ac = float(res.get('AC', 0.0))
+        uc = float(res.get('UC', 0.005))
+        dl = float(res.get('DL', 0.0))
+        ds = float(res.get('DS', 0.0))
+        dp = float(res.get('DP', 0.0))
+        astv = float(res.get('ASTV', 25.0))
+        mstv = float(res.get('MSTV', 1.5))
+        altv = float(res.get('ALTV', 0.0))
+        mltv = float(res.get('MLTV', 10.0))
+        width = float(res.get('Width', 60.0))
+        f_min = float(res.get('Min', 110.0))
+        f_max = float(res.get('Max', 170.0))
+        nmax = float(res.get('Nmax', 3.0))
+        nzeros = float(res.get('Nzeros', 0.0))
+        mode = float(res.get('Mode', 140.0))
+        mean = float(res.get('Mean', 140.0))
+        variance = float(res.get('Variance', 8.0))
+
+        # 1. DSI
+        res['DSI'] = (dl + 2.0 * ds + 3.0 * dp) / (uc + eps)
+
+        # 2. VCR
+        res['VCR'] = (astv * altv) / (mstv * mltv + eps)
+
+        # 3. FHR_Dev
+        res['FHR_Dev'] = abs(lb - 140.0)
+
+        # 4. Contraction_Decel_Coupling
+        res['Contraction_Decel_Coupling'] = uc * (dl + 2.0 * ds + 3.0 * dp)
+
+        # 5. Autonomic_Reactivity_Index
+        res['Autonomic_Reactivity_Index'] = ac / (astv + eps)
+
+        # 6. Hist_Spread_Ratio
+        res['Hist_Spread_Ratio'] = width / (f_max + eps)
+
+        # 7. PRI
+        res['PRI'] = (
+            (astv / 100.0) * 3.0 +
+            (altv / 100.0) * 2.0 +
+            min(dp * 1000.0, 5.0) * 2.5 +
+            min(ds * 500.0, 3.0) * 1.5 -
+            min(ac * 500.0, 5.0) * 2.0 -
+            min(max(mstv - 1.0, 0.0), 5.0) * 0.5
+        )
+
+        # 8. Decel_Pattern_Severity
+        res['Decel_Pattern_Severity'] = dl + (ds * 3.0 if ds > 0 else 0.0) + (dp * 5.0 if dp > 0 else 0.0)
+
+        # 9. Autonomic_Balance_Ratio
+        res['Autonomic_Balance_Ratio'] = ac / ((astv + altv) / 100.0 + eps)
+
+        # 10. FHR_Instability_Score
+        res['FHR_Instability_Score'] = res['FHR_Dev'] * (mltv + 1.0) / (mstv + eps)
+
+        # 11. UC_AC_Coupling
+        res['UC_AC_Coupling'] = ac / (uc + eps)
+
+        # 12. Morphological_Complexity
+        res['Morphological_Complexity'] = (f_max - f_min) * nmax / (variance + eps)
+
+        # 13. Contraction_Load_Index
+        res['Contraction_Load_Index'] = uc * width
+
+        # 14. Basal_Reactivity_Score
+        res['Basal_Reactivity_Score'] = (ac / (uc + eps)) * (1.0 / (res['FHR_Dev'] + 1.0))
+
+        # 15. STV_LTV_Ratio
+        res['STV_LTV_Ratio'] = mstv / (mltv + eps)
+
+        # 16. Hist_Skew_Proxy
+        res['Hist_Skew_Proxy'] = (mode - mean) / (width + eps)
+
+        # 17. Zero_Crossing_Density
+        res['Zero_Crossing_Density'] = nzeros / (width + eps)
+
+        # 18. Variability_Entropy
+        p = np.array([
+            max(astv, 0.01),
+            max(altv, 0.01),
+            max(100.0 - astv - altv, 0.01)
         ])
-        probs = probs / probs.sum()
-        return float(scipy_entropy(probs, base=2))
+        p = p / p.sum()
+        res['Variability_Entropy'] = float(scipy_entropy(p, base=2))
 
-    df['Variability_Entropy'] = df.apply(_variability_entropy, axis=1)
+        return res
 
-    return df
+
+def engineer_features_v2(df: pd.DataFrame) -> pd.DataFrame:
+    """Wrapper calling the canonical compute_derived_features implementation."""
+    return compute_derived_features(df)
 
 
 def main():
     print("=================================================================")
-    print("  PHASE A: ADVANCED CLINICAL FEATURE ENGINEERING v2              ")
+    print("  PHASE A: ADVANCED CLINICAL FEATURE ENGINEERING                 ")
     print("=================================================================")
 
-    # Load cleaned baseline dataset
     in_path = os.path.join('datasets', 'uci_ctg', 'CTG_cleaned.csv')
     if not os.path.exists(in_path):
-        raise FileNotFoundError(f"Could not find: {in_path}")
+        from preprocess import load_and_preprocess_data
+        print(f"Generating cleaned dataset via preprocess.py...")
+        df_clean, _, _ = load_and_preprocess_data()
+    else:
+        df_clean = pd.read_csv(in_path)
 
-    df = pd.read_csv(in_path)
-    target = df['NSP'].copy()
+    print(f"Input Cleaned Dataset: {df_clean.shape} ({df_clean.shape[1]-1} base features)")
 
-    # Drop any previously engineered v1 columns to avoid duplication
-    v1_cols = ['DSI', 'VCR', 'FHR_Dev', 'Contraction_Decel_Coupling',
-               'Autonomic_Reactivity_Index', 'Hist_Spread_Ratio']
-    df_base = df.drop(columns=[c for c in v1_cols if c in df.columns])
-
-    # Remove target before engineering, then re-attach
-    df_features = df_base.drop(columns=['NSP'])
-    df_engineered = engineer_features_v2(df_features)
-    df_engineered['NSP'] = target.values
-
+    df_eng = compute_derived_features(df_clean)
     out_path = os.path.join('datasets', 'uci_ctg', 'CTG_features_engineered.csv')
-    df_engineered.to_csv(out_path, index=False)
+    df_eng.to_csv(out_path, index=False)
 
-    n_orig = df_features.shape[1]
-    n_new = df_engineered.shape[1] - 1  # exclude NSP
-    print(f"  Original features : {n_orig}")
-    print(f"  Engineered features: {n_new}  (+{n_new - n_orig} new)")
-    print(f"  Dataset shape      : {df_engineered.shape}")
-    print(f"  Saved to           : {out_path}")
-
-    # Print new feature names
-    orig_set = set(df_features.columns)
-    new_feats = [c for c in df_engineered.columns if c not in orig_set and c != 'NSP']
-    print(f"\n  New features added ({len(new_feats)}):")
-    for f in new_feats:
-        print(f"    + {f}")
-
-    print("\n  Phase A COMPLETE.")
+    print(f"Engineered Dataset Saved: {out_path}")
+    print(f"Shape: {df_eng.shape} ({df_eng.shape[1]-1} features total, +{len(DERIVED_FEATURE_NAMES)} engineered)")
+    print(f"Derived Features: {', '.join(DERIVED_FEATURE_NAMES)}")
+    print("Feature engineering complete with zero train/serve skew.")
 
 
 if __name__ == '__main__':

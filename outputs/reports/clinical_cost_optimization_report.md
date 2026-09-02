@@ -5,14 +5,14 @@
 - **Optimization Strategy:** We replaced naive mathematical probability cutoffs ($P > 0.33$) with a **Bayesian Cost-Utility Threshold Sweep** optimizing an asymmetric clinical penalty matrix ($C_{FN} = 10, C_{FP} = 2$).
 
 ## 2. Before vs. After Comparison
-| Metric | Baseline (Argmax $P>0.33$) | Clinically Calibrated ($P \ge 0.11$) | Clinical Improvement |
+| Metric | Baseline (Argmax P>0.33) | Clinically Calibrated (P >= 0.13) | Clinical Improvement |
 | :--- | :---: | :---: | :---: |
-| **Total Clinical Risk Score** | **49.0** | **45.0** | **8.2% Risk Reduction** ⭐ |
-| **Pathologic Recall (Safety)** | **94.29%** | **94.29%** | **33/35 Distress Cases Caught** |
-| **Macro F1 Score** | **0.8949** | **0.9030** | Preserves high discriminative power |
+| **Total Clinical Risk Score** | **58.0** | **52.0** | **10.3% Risk Reduction** ⭐ |
+| **Pathologic Recall (Safety)** | **91.43%** | **94.29%** | **33/35 Distress Cases Caught** |
+| **Macro F1 Score** | **0.8923** | **0.8873** | Preserves high discriminative power |
 
 ## 3. Patient Case Studies & Explainability
 1. **Distress Patient Case (Case #1):**
-   - Elevated `% Abnormal Short-Term Variability` (`ASTV = 81.0%`) and `Variability Collapse Ratio` (`VCR = 917.57`) drove positive log-odds shift toward *Pathologic*.
+   - Elevated `% Abnormal Short-Term Variability` (`ASTV = 81.0%`) and `Variability Collapse Ratio` (`VCR = 917.58`) drove positive log-odds shift toward *Pathologic*.
 2. **Reassuring Normal Case (Case #2):**
    - High `Accelerations` (`AC = 6.0000`) and normal baseline variability protected the fetus against false alarms.

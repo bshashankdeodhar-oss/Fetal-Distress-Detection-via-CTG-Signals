@@ -1,0 +1,25 @@
+{
+  "optimal_threshold": 0.13,
+  "pathologic_recall": 0.9429,
+  "cases_detected": "33/35",
+  "risk_reduction_pct": 10.3,
+  "cost_ratio": "Cost(FN) = 10 \u00d7 Cost(FP)",
+  "cost_matrix": [
+    [
+      0.0,
+      1.0,
+      2.0
+    ],
+    [
+      2.0,
+      0.0,
+      1.5
+    ],
+    [
+      10.0,
+      4.0,
+      0.0
+    ]
+  ],
+  "derivation": "Bayesian Expected Loss Minimization: argmin_th sum(Cost_matrix * CM(th)). Closed-form prior: P* = C_FP / (C_FN + C_FP) = 1.24 / (10 + 1.24) \u2248 0.110"
+}

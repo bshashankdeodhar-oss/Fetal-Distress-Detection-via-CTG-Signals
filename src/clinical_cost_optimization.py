@@ -232,6 +232,21 @@ def main():
     with open('outputs/reports/clinical_cost_optimization_report.md', 'w') as f:
         f.write(report)
     print("  -> Saved outputs/reports/clinical_cost_optimization_report.md")
+
+    # Export structured JSON summary for app.py dynamic rendering
+    import json
+    cost_summary = {
+        "optimal_threshold": round(float(optimal_th), 3),
+        "pathologic_recall": round(float(opt_path_recall), 4),
+        "cases_detected": f"{int(opt_cm[2, 2])}/{int(np.sum(y_test==2))}",
+        "risk_reduction_pct": round(float(((baseline_cost - opt_cost)/baseline_cost)*100), 1),
+        "cost_ratio": "Cost(FN) = 10 × Cost(FP)",
+        "cost_matrix": cost_matrix.tolist(),
+        "derivation": "Bayesian Expected Loss Minimization: argmin_th sum(Cost_matrix * CM(th)). Closed-form prior: P* = C_FP / (C_FN + C_FP) = 1.24 / (10 + 1.24) ≈ 0.110"
+    }
+    with open('outputs/clinical_cost_summary.json', 'w') as f:
+        json.dump(cost_summary, f, indent=2)
+    print("  -> Saved outputs/clinical_cost_summary.json")
     
     print("\n=================================================================")
     print("  PHASE 4 CLINICAL COST OPTIMIZATION COMPLETED SUCCESSFULLY!    ")

@@ -63,8 +63,15 @@ def main():
     print("  FETAL DISTRESS DETECTION FROM CTG SIGNALS PIPELINE")
     print("==================================================")
     
-    # 1. Load Data
-    df, feature_names, target_name = load_and_preprocess_data()
+    # 1. Load Data (uses engineered features if available, otherwise cleaned baseline)
+    eng_csv = os.path.join('datasets', 'uci_ctg', 'CTG_features_engineered.csv')
+    if os.path.exists(eng_csv):
+        df = pd.read_csv(eng_csv)
+        target_name = 'NSP'
+        feature_names = [c for c in df.columns if c != target_name]
+        print(f"Loaded engineered feature dataset: {df.shape} ({len(feature_names)} features).")
+    else:
+        df, feature_names, target_name = load_and_preprocess_data()
     X = df[feature_names].values
     y = df[target_name].values - 1  # Map 1, 2, 3 -> 0 (Normal), 1 (Suspect), 2 (Pathologic)
     
@@ -253,6 +260,8 @@ def main():
     try:
         explainer = shap.TreeExplainer(lgb_model)
         shap_values = explainer.shap_values(X_test)
+        if isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
+            shap_values = [shap_values[:, :, i] for i in range(shap_values.shape[2])]
         
         # Save SHAP Summary Plot
         plt.figure(figsize=(10, 7))
@@ -270,6 +279,7 @@ def main():
         print("SHAP multi-class summary plot generated successfully.")
     except Exception as e:
         print("SHAP TreeExplainer exception:", e)
+
         
     print("\n==================================================")
     print("  EXPERIMENTS COMPLETE. ALL ARTIFACTS GENERATED.")

@@ -1,14 +1,14 @@
 {
   "Normal": {
-    "roc_auc": 0.9865,
-    "avg_precision": 0.9963
+    "roc_auc": 0.9856,
+    "avg_precision": 0.996
   },
   "Suspect": {
-    "roc_auc": 0.9609,
-    "avg_precision": 0.8663
+    "roc_auc": 0.9494,
+    "avg_precision": 0.863
   },
   "Pathologic": {
     "roc_auc": 0.9942,
-    "avg_precision": 0.944
+    "avg_precision": 0.9437
   }
 }

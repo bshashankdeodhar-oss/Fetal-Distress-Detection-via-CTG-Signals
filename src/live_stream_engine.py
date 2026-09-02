@@ -7,6 +7,7 @@ import os
 import numpy as np
 import pandas as pd
 import scipy.stats as sst
+from src.feature_engineering import compute_derived_features
 
 try:
     import wfdb
@@ -217,40 +218,6 @@ def extract_sliding_window_features(fhr_window, uc_window, fs=4.0):
         'Variance': max(fhr_var, 1.0),
         'Tendency': 0.0
     }
+    # Use unified canonical feature engineering (zero train/serve skew)
+    return compute_derived_features(row)
 
-    # 18 Engineered Features
-    row['DSI'] = (row['DL'] + 2.0 * row['DS'] + 3.0 * row['DP']) / (row['UC'] + eps)
-    row['VCR'] = (row['ASTV'] * row['ALTV']) / (row['MSTV'] * row['MLTV'] + eps)
-    row['FHR_Dev'] = abs(row['LB'] - 140.0)
-    row['Contraction_Decel_Coupling'] = row['UC'] * (row['DL'] + 2.0 * row['DS'] + 3.0 * row['DP'])
-    row['Autonomic_Reactivity_Index'] = row['AC'] / (row['ASTV'] + eps)
-    row['Hist_Spread_Ratio'] = row['Width'] / (row['Max'] + eps)
-
-    row['PRI'] = (
-        (row['ASTV'] / 100.0) * 3.0 +
-        (row['ALTV'] / 100.0) * 2.0 +
-        min(row['DP'] * 1000.0, 5.0) * 2.5 +
-        min(row['DS'] * 500.0, 3.0) * 1.5 -
-        min(row['AC'] * 500.0, 5.0) * 2.0 -
-        min(row['MSTV'] - 1.0, 5.0) * 0.5
-    )
-    row['Decel_Pattern_Severity'] = (
-        row['DL'] +
-        (row['DS'] * 3.0 if row['DS'] > 0 else 0) +
-        (row['DP'] * 5.0 if row['DP'] > 0 else 0)
-    )
-    row['Autonomic_Balance_Ratio'] = row['AC'] / ((row['ASTV'] + row['ALTV']) / 100.0 + eps)
-    row['FHR_Instability_Score'] = row['FHR_Dev'] * (row['MLTV'] + 1.0) / (row['MSTV'] + eps)
-    row['UC_AC_Coupling'] = row['AC'] / (row['UC'] + eps)
-    row['Morphological_Complexity'] = (row['Max'] - row['Min']) * row['Nmax'] / (row['Variance'] + eps)
-    row['Contraction_Load_Index'] = row['UC'] * row['Width']
-    row['Basal_Reactivity_Score'] = (row['AC'] / (row['UC'] + eps)) * (1.0 / (row['FHR_Dev'] + 1.0))
-    row['STV_LTV_Ratio'] = row['MSTV'] / (row['MLTV'] + eps)
-    row['Hist_Skew_Proxy'] = (row['Mode'] - row['Mean']) / (row['Width'] + eps)
-    row['Zero_Crossing_Density'] = row['Nzeros'] / (row['Width'] + eps)
-
-    p_arr = np.array([max(row['ASTV'], 0.01), max(row['ALTV'], 0.01), max(100.0 - row['ASTV'] - row['ALTV'], 0.01)])
-    p_arr /= p_arr.sum()
-    row['Variability_Entropy'] = float(sst.entropy(p_arr, base=2))
-
-    return row
