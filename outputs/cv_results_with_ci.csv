@@ -1,0 +1,6 @@
+Model,Family,Macro F1 (mean),Macro F1 (std),Macro F1 95% CI,Macro Recall,Balanced Acc,F1 (Pathologic),Rec (Pathologic)
+LightGBM (Optuna-Tuned),Gradient Boosted Trees,0.9161,0.0171,"[0.8987, 0.9267]",0.9147,0.9147,0.9131,0.9203
+XGBoost,Gradient Boosted Trees,0.9145,0.0148,"[0.9025, 0.9278]",0.9009,0.9009,0.93,0.9146
+Random Forest,Bagged Ensembles,0.9048,0.0132,"[0.8936, 0.9167]",0.899,0.899,0.9232,0.8917
+SVM (RBF),Kernel Margin,0.8463,0.0187,"[0.8291, 0.8628]",0.8857,0.8857,0.8651,0.8632
+Logistic Regression,Linear,0.8022,0.0155,"[0.7894, 0.8178]",0.8674,0.8674,0.8034,0.8803

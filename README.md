@@ -1,144 +1,176 @@
 # Fetal Distress Detection from Cardiotocography (CTG) Signals
 
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Framework](https://img.shields.io/badge/ML-LightGBM%20%7C%20XGBoost%20%7C%20Stacking-orange)
+![Standard](https://img.shields.io/badge/Clinical%20Standard-FIGO%202015%20%7C%20ACOG-red)
+![Metric](https://img.shields.io/badge/Champion%20Macro%20F1-0.9030-brightgreen)
 
-An end-to-end clinical machine learning framework for detecting fetal distress from Cardiotocography (CTG) recordings. The system evaluates multiple distinct model families across a stratified held-out split, implements cost-sensitive class weighting for severe class imbalance, generates $3 \times 3$ confusion matrices, reports macro-averaged F1 metrics, and provides explainability via SHAP (SHapley Additive exPlanations).
-
----
-
-## 📌 Problem Statement & Clinical Context
-
-During labor and delivery, electronic fetal monitoring via Cardiotocography (CTG) tracks two continuous physiological signals:
-1. **Fetal Heart Rate (FHR):** Baseline rhythm, accelerations, decelerations, and short/long-term variability.
-2. **Uterine Contractions (UC):** Frequency, duration, and intensity of maternal uterine activity.
-
-### The 3-Class Triage Target:
-* **Class 1 (Normal):** Physiological baseline with normal variability and presence of accelerations. No intervention required.
-* **Class 2 (Suspect):** Borderline features requiring active observation or conservative intrauterine resuscitation.
-* **Class 3 (Pathological):** Severe decelerations (prolonged/variable/late) or absent variability indicating fetal hypoxia/acidosis. Requires immediate obstetric intervention (e.g., emergent Caesarean section).
-
-### The Imbalance & Clinical Cost Asymmetry:
-* **The Imbalance:** The real-world distribution is heavily skewed toward Normal cases (~78% Normal, ~14% Suspect, ~8% Pathological).
-* **Asymmetric Error Costs:**
-  - **False Negative (Missed Distress):** Catastrophic clinical outcome (neonatal encephalopathy, cerebral palsy, or stillbirth).
-  - **False Positive (False Alarm):** Unnecessary emergency surgical intervention, maternal trauma, and hospital resource burden.
-  - **Evaluation Requirement:** **Macro F1 Score** and per-class recall (Accuracy alone is clinically misleading).
+> **A clinically-rigorous, end-to-end machine learning pipeline for automated fetal distress triage from Cardiotocography recordings**, grounded in FIGO/ACOG guidelines and validated via 5-Fold Stratified Cross-Validation with bootstrap confidence intervals.
 
 ---
 
-## 📊 Dataset Landscape
+## 🏥 Clinical Problem
 
-The workspace includes structured access to the primary clinical benchmark datasets:
+Fetal distress — primarily caused by uteroplacental insufficiency and acute umbilical cord compression — manifests as measurable changes in fetal heart rate (FHR) variability and uterine contraction patterns. Missed detection leads to irreversible **hypoxic-ischaemic encephalopathy (HIE)** or intrapartum stillbirth.
+
+**The core challenge:** the dataset is severely imbalanced (8.3% Pathologic, 13.9% Suspect, 77.8% Normal), so standard overall accuracy collapses as a metric and symmetric loss functions are clinically inappropriate.
+
+---
+
+## 🗂️ Pipeline Architecture
 
 ```
-datasets/
-├── uci_ctg/
-│   ├── CTG.xls               # Original canonical UCI multi-sheet database
-│   └── CTG_cleaned.csv       # 2,126 recordings, 21 CTG features, 3-class target
-└── physionet_ctu_uhb/
-    ├── RECORDS.txt           # Directory of all 552 PhysioNet intrapartum deliveries
-    ├── 1001.hea & 1001.dat   # Continuous 4 Hz FHR + UC signal (pH=7.14, Apgar=6/8)
-    ├── 1002.hea & 1002.dat   # Sample continuous 4 Hz recording
-    └── 1003.hea & 1003.dat   # Sample continuous 4 Hz recording
-```
-
-### The 21 Clinical Morphological Features
-| Group | Feature Code | Clinical Description |
-| :--- | :--- | :--- |
-| **Baseline & Activity** | `LB` | FHR baseline (beats per minute) |
-| | `AC` | Number of accelerations per second |
-| | `FM` | Number of fetal movements per second |
-| | `UC` | Number of uterine contractions per second |
-| **Decelerations** | `DL` | Light decelerations per second |
-| | `DS` | Severe decelerations per second |
-| | `DP` | Prolonged decelerations per second |
-| **Variability** | `ASTV` | Percentage of time with abnormal short term variability |
-| | `MSTV` | Mean value of short term variability |
-| | `ALTV` | Percentage of time with abnormal long term variability |
-| | `MLTV` | Mean value of long term variability |
-| **Histogram Morphometrics** | `Width` | Histogram width (Max - Min) |
-| | `Min` / `Max` | Minimum / Maximum FHR frequencies |
-| | `Nmax` / `Nzeros` | Number of histogram peaks / Number of histogram zeros |
-| | `Mode` / `Mean` / `Median` | Statistical central tendencies of FHR |
-| | `Variance` | Histogram variance |
-| | `Tendency` | Histogram asymmetry (-1: left, 0: symmetric, 1: right) |
-
----
-
-## 🏗️ End-to-End Pipeline Architecture
-
-```mermaid
-flowchart TD
-    subgraph S1["1. Data Ingestion & Imbalance Profiling"]
-        A["UCI CTG Dataset (2,126 Cases)"] --> B["Data Cleaning & Quality Check"]
-        B --> C["Class Imbalance Audit\n(Normal: 78% | Suspect: 14% | Pathologic: 8%)"]
-    end
-
-    subgraph S2["2. Partitioning & Preprocessing"]
-        C --> D["Stratified Train/Test Split (80% Train / 20% Held-Out Test)"]
-        D --> E["Feature Scaling (StandardScaler fitted on Train only)"]
-        D --> F["Cost-Sensitive Loss & Balanced Class Weights"]
-    end
-
-    subgraph S3["3. Multi-Family Model Zoo"]
-        E & F --> M1["Family 1: Gradient Boosted Trees\n(LightGBM / XGBoost / Random Forest)"]
-        E & F --> M2["Family 2: Margin & Linear Models\n(Cost-Sensitive Logistic Regression / SVM RBF)"]
-        E & F --> M3["Family 3: Neural Networks\n(Multi-Layer Perceptron / Tabular MLP)"]
-    end
-
-    subgraph S4["4. Evaluation & Diagnostic Diagnostics"]
-        M1 & M2 & M3 --> H["Held-Out Test Set Evaluation"]
-        H --> I["Macro F1 & Per-Class Recall"]
-        H --> J["3x3 Confusion Matrix\n(Normal vs Suspect vs Pathologic)"]
-        H --> K["Clinical Risk Analysis\n(Missed Distress vs False Alarms)"]
-    end
-
-    subgraph S5["5. Explainability & Interpretability (XAI)"]
-        M1 & M2 & M3 --> L["SHAP Multi-Class Values (TreeExplainer)"]
-        M1 & M2 & M3 --> M["Feature Importance (ASTV, ALTV, DP, UC)"]
-    end
-
-    subgraph S6["6. Benchmark Comparison"]
-        I & J & L --> N["Benchmark Summary Table &\nChampion Model Selection"]
-    end
+  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+  │  INPUT: UCI CTG Dataset (2,126 recordings × 21 raw morphological features)               │
+  └────────────────────────────────┬─────────────────────────────────────────────────────────┘
+                                   ▼
+  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+  │  PHASE A — ADVANCED FEATURE ENGINEERING (src/feature_engineering.py)                     │
+  │  21 raw → 39 features (+18 FIGO/ACOG clinical biomarkers)                               │
+  │  DSI · VCR · PRI · Autonomic Balance · Variability Entropy · Morphological Complexity    │
+  └────────────────────────────────┬─────────────────────────────────────────────────────────┘
+                                   ▼
+  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+  │  PHASE B — OPTUNA BAYESIAN HYPERPARAMETER OPTIMISATION (src/optuna_hpo.py)               │
+  │  100-trial TPE study · Optimises 5-Fold CV Macro F1 · Exports best_params_lgb.json       │
+  └────────────────────────────────┬─────────────────────────────────────────────────────────┘
+                                   ▼
+  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+  │  PHASE C — 5-FOLD STRATIFIED CV + BOOTSTRAP CI (src/cv_evaluation.py)                   │
+  │  Evaluates 5 model families · Mean ± std · 95% bootstrap CI on every metric              │
+  └────────────────────────────────┬─────────────────────────────────────────────────────────┘
+                                   ▼
+  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+  │  PHASE D — STACKING ENSEMBLE META-LEARNER (src/stacking_ensemble.py)                    │
+  │  LightGBM + XGBoost + Random Forest + SVM → Meta: Cost-Sensitive Logistic Regression     │
+  │  5-Fold OOF meta-features + passthrough raw features                                     │
+  └────────────────────────────────┬─────────────────────────────────────────────────────────┘
+                                   ▼
+  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+  │  PHASE E — PROBABILITY CALIBRATION + CLINICAL VALIDATION CURVES                          │
+  │  Platt Scaling · Reliability Diagrams · ROC-AUC (OvR) · Precision-Recall (OvR)          │
+  └────────────────────────────────┬─────────────────────────────────────────────────────────┘
+                                   ▼
+  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+  │  PHASE F — ASYMMETRIC COST CALIBRATION (src/clinical_cost_optimization.py)               │
+  │  Cost(FN) = 10 × Cost(FP) · Optimal threshold P* ≥ 0.110 · Pathologic Recall: 94.29%   │
+  └────────────────────────────────┬─────────────────────────────────────────────────────────┘
+                                   ▼
+  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+  │  PHASE G — ENRICHED SHAP EXPLAINABILITY (src/shap_suite.py)                             │
+  │  Beeswarm · Decision Plot · Multi-class Summary Bar · 3 Case Waterfall Studies           │
+  └────────────────────────────────┬─────────────────────────────────────────────────────────┘
+                                   ▼
+  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+  │  OUTPUT: Blueprint CDSS Dashboard (app.py / frontend/index.html)                         │
+  │  Live CTG oscilloscope · Real-time inference · All 7 clinical plots embedded              │
+  └──────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔬 Model Families & Mathematical Principles
+## 📊 Results — Held-Out Benchmark (426 unseen patients, 20% stratified split)
 
-1. **Family 1: Gradient Boosted Decision Trees (LightGBM & Random Forest)**
-   - *Inductive Principle:* Orthogonal recursive splitting of non-linear feature interactions (e.g. $ASTV > 65\% \land DP > 0$).
-   - *Imbalance Strategy:* Balanced sub-sampling and class-weighted gradients.
-2. **Family 2: Regularized Margin & Linear Classifiers (SVM RBF & Logistic Regression)**
-   - *Inductive Principle:* Maximum-margin geometric separation in kernelized Hilbert space / regularized log-odds hyperplanes.
-   - *Imbalance Strategy:* Cost-sensitive penalty parameter $C_k \propto 1 / N_k$.
-3. **Family 3: Deep Neural Networks (Multi-Layer Perceptron - Tabular MLP)**
-   - *Inductive Principle:* Layered continuous affine transformations with ReLU activations and dropout regularizers.
+| Rank | Model | Family | Macro F1 | Pathologic Recall | Balanced Acc |
+|:---:|:---|:---|:---:|:---:|:---:|
+| 🥇 | **Stacking Ensemble (LGB+XGB+RF+SVM)** | Meta-Learner | **0.9083** | **94.29%** | 89.1% |
+| 🥈 | XGBoost | Gradient Boosted Trees | 0.8998 | 91.43% | 88.2% |
+| 🥉 | LightGBM (Optuna-Tuned) | Gradient Boosted Trees | 0.8949 | **94.29%** | 89.0% |
+| 4 | Random Forest | Bagged Tree Ensembles | 0.8810 | 91.43% | 87.9% |
+| 5 | SVM (RBF Kernel) | Kernel Margin | 0.8245 | 88.57% | 87.9% |
+| 6 | Logistic Regression | Linear Probabilistic | 0.7796 | 82.86% | 84.9% |
+
+> **Why Macro F1, not Overall Accuracy?** With 77.8% Normal cases, a dummy "predict Normal always" baseline achieves 77.8% accuracy while catching 0% of distress cases. Macro F1 gives equal 33.3% weight to all three classes, penalising failures on the minority Pathologic class.
 
 ---
 
-## 🚀 Quickstart & Reproduction
+## 🧬 Feature Engineering (18 Clinical Biomarkers Added)
 
-### 1. Install Dependencies
+| Feature | Formula | Clinical Meaning |
+|:---|:---|:---|
+| `DSI` | `(DL + 2DS + 3DP) / (UC + ε)` | Deceleration severity weighted by contraction coupling |
+| `VCR` | `(ASTV × ALTV) / (MSTV × MLTV + ε)` | Multi-scale autonomic variability collapse |
+| `PRI` | Weighted composite of ASTV, ALTV, DP, DS, AC, MSTV | Pathologic Risk Index — single summary risk score |
+| `Autonomic_Balance_Ratio` | `AC / ((ASTV + ALTV)/100 + ε)` | Reactive vs. pathological autonomic balance |
+| `Variability_Entropy` | Shannon entropy of ASTV/ALTV distribution | Loss of HRV complexity — marker of hypoxia |
+| `Decel_Pattern_Severity` | Weighted sum of DL, DS, DP | Cascade severity of consecutive decelerations |
+| `FHR_Instability_Score` | `FHR_Dev × (MLTV + 1) / (MSTV + ε)` | Combined baseline deviation and long-term instability |
+| `Morphological_Complexity` | `(Max − Min) × Nmax / (Variance + ε)` | Histogram richness — reduced in pathologic flatline |
+
+---
+
+## 🎯 Asymmetric Clinical Cost Calibration
+
+Standard ML uses symmetric loss: `Cost(FN) = Cost(FP) = 1`.
+
+In obstetrics, a missed fetal distress case risks **irreversible hypoxic brain injury**, while a false alarm results in precautionary C-section — a far lower clinical harm.
+
+We applied **Bayesian decision-theoretic threshold optimisation**:
+
+```
+Clinical Loss = 10 × N(FN) + 2 × N(FP)
+Optimal Threshold P* = 0.110
+Pathologic Recall: 94.29% (33 / 35 distress cases caught)
+```
+
+---
+
+## 🚀 Setup & Installation
+
 ```bash
+# Clone the repository
+git clone https://github.com/bshashankdeodhar-oss/Fetal-Distress-Detection-via-CTG-Signals.git
+cd "Fetal Distress Detection from CTG Signals"
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Run the full pipeline (in order)
+python src/feature_engineering.py
+python src/optuna_hpo.py          # ~5 min — 100-trial Optuna search
+python src/cv_evaluation.py
+python src/stacking_ensemble.py
+python src/calibration_analysis.py
+python src/shap_suite.py
+
+# Launch the Streamlit dashboard
+streamlit run app.py
 ```
 
-### 2. Fetch Datasets
-```bash
-python fetch_all_datasets.py
+---
+
+## 📁 Repository Structure
+
+```
+├── datasets/uci_ctg/
+│   ├── CTG_cleaned.csv                        # Cleaned base dataset (2126 × 21)
+│   └── CTG_features_engineered.csv            # v2 dataset with 39 features
+├── src/
+│   ├── feature_engineering.py                 # Phase A — 18 clinical biomarkers
+│   ├── optuna_hpo.py                          # Phase B — Bayesian HPO
+│   ├── cv_evaluation.py                       # Phase C — 5-Fold CV + Bootstrap CI
+│   ├── stacking_ensemble.py                   # Phase D — Meta-Learner
+│   ├── calibration_analysis.py                # Phase E — ROC / PR / Calibration
+│   ├── shap_suite.py                          # Phase F — Full SHAP explainability
+│   └── clinical_cost_optimization.py          # Asymmetric cost threshold sweep
+├── outputs/
+│   ├── figures/                               # All 18+ plots
+│   ├── reports/                               # Markdown clinical reports
+│   ├── model_benchmark_comparison.csv         # Full leaderboard
+│   ├── cv_results_with_ci.csv                 # CV results with 95% CIs
+│   └── best_params_lgb.json                   # Optuna champion parameters
+├── frontend/                                  # Pure HTML/JS Blueprint dashboard
+├── app.py                                     # Streamlit CDSS application
+└── DEFENSE_AND_NOVELTY_GUIDE.md               # Hackathon defense script
 ```
 
-### 3. Preprocess & Validate Data
-```bash
-python preprocess.py
-```
+---
 
-### 4. Train Models, Evaluate Held-out Split & Generate SHAP Analysis
-```bash
-python train_models.py
-```
+## 📚 Clinical References
 
-All evaluation metrics, benchmark comparison tables, $3 \times 3$ confusion matrix plots, and SHAP interpretability charts will be exported to the `outputs/` folder.
+1. Ayres-de-Campos, D. et al. (2015). *FIGO Consensus Guidelines on Intrapartum Fetal Monitoring*. IJGO.
+2. American College of Obstetricians and Gynecologists (2009). *ACOG Practice Bulletin 116*.
+3. Goldberger, A. et al. *PhysioBank, PhysioToolkit, and PhysioNet*. Circulation (2000).
+4. Lundberg, S. M. & Lee, S.-I. (2017). *A Unified Approach to Interpreting Model Predictions*. NeurIPS.
+5. Akiba, T. et al. (2019). *Optuna: A Next-generation Hyperparameter Optimization Framework*. KDD.

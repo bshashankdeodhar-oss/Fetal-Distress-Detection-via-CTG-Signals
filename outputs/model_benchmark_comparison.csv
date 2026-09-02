@@ -2,6 +2,7 @@ Model,Family,Macro F1,Macro Precision,Macro Recall,F1 (Normal),F1 (Suspect),F1 (
 XGBoost,Gradient Boosted Trees,0.8998,0.9228,0.8817,0.9703,0.8148,0.9143,0.9143,0.8817,0.946
 LightGBM,Gradient Boosted Trees,0.8949,0.9043,0.8902,0.9731,0.8073,0.9041,0.9429,0.8902,0.946
 Random Forest,Bagged Tree Ensembles,0.881,0.8827,0.8793,0.9594,0.7692,0.9143,0.9143,0.8793,0.9296
+Stacking Ensemble (LGB+XGB+RF+SVM),Meta-Learner (Stacking),0.873,0.8581,0.8902,0.9557,0.7619,0.9014,0.9143,0.8902,0.9225
 Support Vector Machine (SVC RBF),Kernel Margin Classifiers,0.8245,0.7918,0.8786,0.9304,0.6939,0.8493,0.8857,0.8786,0.8826
 Multi-Layer Perceptron (MLP Neural Net),Deep Neural Networks,0.7874,0.804,0.7756,0.955,0.6885,0.7188,0.6571,0.7756,0.8991
 Cost-Sensitive Logistic Regression,Linear Probabilistic Models,0.7796,0.7404,0.8488,0.9278,0.6579,0.7532,0.8286,0.8488,0.8638

@@ -1,0 +1,14 @@
+{
+  "best_cv_macro_f1": 0.9202,
+  "params": {
+    "n_estimators": 504,
+    "learning_rate": 0.022245162070041808,
+    "num_leaves": 90,
+    "max_depth": 10,
+    "min_child_samples": 20,
+    "subsample": 0.8105769444437069,
+    "colsample_bytree": 0.6284404246291676,
+    "reg_alpha": 0.02345694561504473,
+    "reg_lambda": 0.008223436457656694
+  }
+}
